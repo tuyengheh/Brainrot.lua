@@ -101,7 +101,7 @@ end
 hopBtn.MouseButton1Click:Connect(findGoodServer)
 
 --------------------------------------------------
--- 🧠 TÌM BASE CỦA CHÍNH BẠN
+-- 🧠 TÌM BASE CỦA BẠN
 local function findMyBase()
     local myName = string.lower(player.Name)
 
@@ -111,17 +111,13 @@ local function findMyBase()
 
             if name:find(myName) then
                 local part = obj:FindFirstChildWhichIsA("BasePart")
-                if part then
-                    return part.Position
-                end
+                if part then return part.Position end
             end
 
             local owner = obj:FindFirstChild("Owner")
             if owner and owner.Value == player then
                 local part = obj:FindFirstChildWhichIsA("BasePart")
-                if part then
-                    return part.Position
-                end
+                if part then return part.Position end
             end
         end
     end
@@ -130,7 +126,7 @@ local function findMyBase()
 end
 
 --------------------------------------------------
--- 🚀 -- 🚀 TELEPORT BASE (STEP - CHỐNG ANTI)
+-- 🚀 TELEPORT BASE (STEP BYPASS - KHÔNG CHẾT)
 local function teleportBase(pos)
     local char = player.Character
     if not char then return end
@@ -138,18 +134,31 @@ local function teleportBase(pos)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    local current = hrp.Position
-    local distance = (pos - current).Magnitude
+    local startPos = hrp.Position
+    local distance = (pos - startPos).Magnitude
 
-    -- chia nhỏ đường đi
-    local steps = math.floor(distance / 20)
+    -- chia nhỏ quãng đường
+    local steps = math.clamp(math.floor(distance / 25), 10, 50)
 
     for i = 1, steps do
-        local nextPos = current:Lerp(pos, i / steps)
+        local nextPos = startPos:Lerp(pos, i / steps)
         hrp.CFrame = CFrame.new(nextPos + Vector3.new(0,2,0))
-        task.wait(0.1)
+        task.wait(0.08)
     end
 
-    -- tới đích
     hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
 end
+
+--------------------------------------------------
+-- BUTTON TP BASE
+baseBtn.MouseButton1Click:Connect(function()
+    local pos = findMyBase()
+
+    if pos then
+        print("🚀 Đang về base...")
+        teleportBase(pos)
+        print("🏠 Đã về base an toàn")
+    else
+        warn("❌ Không tìm thấy base của bạn")
+    end
+end)
