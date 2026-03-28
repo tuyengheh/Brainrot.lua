@@ -1,4 +1,5 @@
 # Brainrot.lua 
+                -- SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local Http = game:GetService("HttpService")
@@ -6,7 +7,7 @@ local Http = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local PlaceID = game.PlaceId
 
--- 🔥 lowercase hết
+-- 🔥 KEYWORD SECRET
 local KEYWORDS = {
     "secret",
     "griffin",
@@ -30,11 +31,29 @@ local KEYWORDS = {
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
 local text = Instance.new("TextLabel", gui)
-text.Size = UDim2.new(0,300,0,50)
+text.Size = UDim2.new(0,320,0,60)
 text.Position = UDim2.new(0.35,0,0.4,0)
 text.BackgroundColor3 = Color3.fromRGB(20,20,20)
 text.TextColor3 = Color3.new(1,1,1)
-text.Text = "🔍 Đang săn SECRET..."
+text.Text = "🔄 AUTO ROLL SECRET..."
+
+-- 🔊 SOUND
+local sound = Instance.new("Sound", game.Workspace)
+sound.SoundId = "rbxassetid://9118823104"
+sound.Volume = 3
+
+-- 🔁 KEEP SCRIPT SAU TELEPORT
+local function Queue()
+    local code = [[
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua"))()
+    ]]
+
+    if syn and syn.queue_on_teleport then
+        syn.queue_on_teleport(code)
+    elseif queue_on_teleport then
+        queue_on_teleport(code)
+    end
+end
 
 -- check secret
 local function HasSecret()
@@ -52,7 +71,7 @@ local function HasSecret()
     return false
 end
 
--- hop có check lỗi
+-- hop
 local function ServerHop()
     local success, req = pcall(function()
         return Http:JSONDecode(game:HttpGet(
@@ -64,34 +83,50 @@ local function ServerHop()
         for _,v in pairs(req.data) do
             if v.playing < v.maxPlayers then
                 text.Text = "🔁 Đang chuyển server..."
+                
+                Queue() -- 🔥 giữ script
+                
                 TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
-                return
+                return true
             end
         end
 
-        text.Text = "⚠️ Server nào cũng full → bấm lại"
+        text.Text = "⚠️ Server full hết → thử lại..."
     else
-        text.Text = "❌ Lỗi lấy server → thử lại"
+        text.Text = "❌ Lỗi lấy server → retry..."
     end
+
+    return false
 end
 
--- nút
-local btn = Instance.new("TextButton", gui)
-btn.Size = UDim2.new(0,300,0,50)
-btn.Position = UDim2.new(0.35,0,0.5,0)
-btn.Text = "🔁 Kiếm SECRET"
-btn.BackgroundColor3 = Color3.fromRGB(50,150,255)
+-- LOOP AUTO
+task.spawn(function()
+    while true do
+        text.Text = "🔍 Đang kiểm tra..."
 
-btn.MouseButton1Click:Connect(function()
-    text.Text = "🔍 Đang check..."
+        local ok, name, pet = HasSecret()
 
-    local ok, name, pet = HasSecret()
+        if ok then
+            text.Text = "🔥 TÌM THẤY SECRET: "..name.." ("..pet..")"
 
-    if ok then
-        text.Text = "🔥 Có SECRET: "..name.." ("..pet..")"
-    else
-        text.Text = "❌ Không có → chuyển..."
+            -- 🔊 phát âm
+            for i = 1,3 do
+                sound:Play()
+                task.wait(0.3)
+            end
+
+            return
+        else
+            text.Text = "❌ Không có → roll tiếp..."
+            task.wait(0.5)
+
+            local hopped = ServerHop()
+
+            if not hopped then
+                task.wait(1)
+            end
+        end
+
         task.wait(1)
-        ServerHop()
     end
 end)
