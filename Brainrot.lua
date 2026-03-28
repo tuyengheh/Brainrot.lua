@@ -5,24 +5,24 @@ local Http = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local PlaceID = game.PlaceId
 
--- từ khóa secret
+-- 🔥 lowercase hết
 local KEYWORDS = {
     "secret",
     "griffin",
     "hydra",
     "dragon",
     "skibidi",
-    "Garama and Madundung",
-    "Tictac Sahur",
-    "Lavadorito Spinito",
-    "La Secret Combinasion",
-    "Ketchuru and Musturu",
-    "Spaghetti Tualetti",
-    "Eviledon",
-    "Spooky and Pumpky",
-    "Bacuru and Egguru",
-    "Cooki and Milki",
-    "Ketupat Kepat"
+    "garama and madundung",
+    "tictac sahur",
+    "lavadorito spinito",
+    "la secret combinasion",
+    "ketchuru and musturu",
+    "spaghetti tualetti",
+    "eviledon",
+    "spooky and pumpky",
+    "bacuru and egguru",
+    "cooki and milki",
+    "ketupat kepat"
 }
 
 -- UI
@@ -43,7 +43,7 @@ local function HasSecret()
 
             for _,key in pairs(KEYWORDS) do
                 if string.find(name, key) then
-                    return true, plr.Name, name
+                    return true, plr.Name, key
                 end
             end
         end
@@ -51,21 +51,30 @@ local function HasSecret()
     return false
 end
 
--- hop
+-- hop có check lỗi
 local function ServerHop()
-    local req = Http:JSONDecode(game:HttpGet(
-        "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
-    ))
+    local success, req = pcall(function()
+        return Http:JSONDecode(game:HttpGet(
+            "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
+        ))
+    end)
 
-    for _,v in pairs(req.data) do
-        if v.playing < v.maxPlayers then
-            TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
-            break
+    if success and req and req.data then
+        for _,v in pairs(req.data) do
+            if v.playing < v.maxPlayers then
+                text.Text = "🔁 Đang chuyển server..."
+                TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
+                return
+            end
         end
+
+        text.Text = "⚠️ Server nào cũng full → bấm lại"
+    else
+        text.Text = "❌ Lỗi lấy server → thử lại"
     end
 end
 
--- nút roll
+-- nút
 local btn = Instance.new("TextButton", gui)
 btn.Size = UDim2.new(0,300,0,50)
 btn.Position = UDim2.new(0.35,0,0.5,0)
@@ -78,10 +87,10 @@ btn.MouseButton1Click:Connect(function()
     local ok, name, pet = HasSecret()
 
     if ok then
-        text.Text = "🔥 SECRET: "..name
+        text.Text = "🔥 Có SECRET: "..name.." ("..pet..")"
     else
-        text.Text = "❌ Không có → chuyển server"
-        wait(1)
+        text.Text = "❌ Không có → chuyển..."
+        task.wait(1)
         ServerHop()
     end
 end)
