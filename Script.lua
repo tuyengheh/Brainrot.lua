@@ -126,27 +126,28 @@ local function findMyBase()
 end
 
 --------------------------------------------------
--- 🚀 TELEPORT BASE (STEP BYPASS - KHÔNG CHẾT)
+-- 🚀 TELEPORT BASE (ĐI BỘ THẬT - FIX 100%)
 local function teleportBase(pos)
     local char = player.Character
     if not char then return end
 
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
 
-    local startPos = hrp.Position
-    local distance = (pos - startPos).Magnitude
+    if not humanoid or not hrp then return end
 
-    -- chia nhỏ quãng đường
-    local steps = math.clamp(math.floor(distance / 25), 10, 50)
+    print("🚶 Đang chạy về base...")
+
+    local distance = (pos - hrp.Position).Magnitude
+    local steps = math.clamp(math.floor(distance / 15), 5, 40)
 
     for i = 1, steps do
-        local nextPos = startPos:Lerp(pos, i / steps)
-        hrp.CFrame = CFrame.new(nextPos + Vector3.new(0,2,0))
-        task.wait(0.08)
+        local nextPos = hrp.Position:Lerp(pos, i / steps)
+        humanoid:MoveTo(nextPos)
+        humanoid.MoveToFinished:Wait(0.3)
     end
 
-    hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+    humanoid:MoveTo(pos)
 end
 
 --------------------------------------------------
@@ -155,10 +156,8 @@ baseBtn.MouseButton1Click:Connect(function()
     local pos = findMyBase()
 
     if pos then
-        print("🚀 Đang về base...")
         teleportBase(pos)
-        print("🏠 Đã về base an toàn")
     else
-        warn("❌ Không tìm thấy base của bạn")
+        warn("❌ Không tìm thấy base")
     end
 end)
