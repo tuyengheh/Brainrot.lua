@@ -129,7 +129,7 @@ local function findMyBase()
 end
 
 --------------------------------------------------
--- 🚀 TELEPORT BASE (BYPASS CẦM PET)
+-- 🚀 -- 🚀 TELEPORT BASE (STEP - CHỐNG ANTI)
 local function teleportBase(pos)
     local char = player.Character
     if not char then return end
@@ -137,20 +137,18 @@ local function teleportBase(pos)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- spam để bypass anti khi đang cầm pet
-    for i = 1, 12 do
-        hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
-        task.wait()
+    local current = hrp.Position
+    local distance = (pos - current).Magnitude
+
+    -- chia nhỏ đường đi
+    local steps = math.floor(distance / 20)
+
+    for i = 1, steps do
+        local nextPos = current:Lerp(pos, i / steps)
+        hrp.CFrame = CFrame.new(nextPos + Vector3.new(0,2,0))
+        task.wait(0.1)
     end
+
+    -- tới đích
+    hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
 end
-
-baseBtn.MouseButton1Click:Connect(function()
-    local pos = findMyBase()
-
-    if pos then
-        teleportBase(pos)
-        print("🏠 TP về base (bypass thành công)")
-    else
-        warn("❌ Không tìm thấy base của bạn")
-    end
-end)
