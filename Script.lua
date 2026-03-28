@@ -1,5 +1,5 @@
 # Brainrot.lua 
--    --// SERVICES
+-       --// SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
@@ -19,10 +19,9 @@ frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 frame.BorderSizePixel = 0
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
--- TITLE
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "Server + Base"
+title.Text = "Server + Base PRO"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
@@ -55,8 +54,8 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- BUTTON CREATOR
-local function createBtn(text, y)
+-- BUTTON
+local function createBtn(text,y)
     local b = Instance.new("TextButton", frame)
     b.Size = UDim2.new(0.8,0,0,40)
     b.Position = UDim2.new(0.1,0,0,y)
@@ -69,11 +68,11 @@ local function createBtn(text, y)
     return b
 end
 
-local hopBtn = createBtn("Tìm Server Ngon", 40)
-local baseBtn = createBtn("Teleport Base", 95)
+local hopBtn = createBtn("Tìm Server 5-300m", 40)
+local baseBtn = createBtn("premium steal tp", 95)
 
 --------------------------------------------------
--- 🔍 TÌM SERVER NGON
+-- 🔍 HOP SERVER NGON
 local function findGoodServer()
     local placeId = game.PlaceId
 
@@ -82,7 +81,6 @@ local function findGoodServer()
     end)
 
     if not success then
-        warn("❌ Lỗi mạng → hop thường")
         TeleportService:Teleport(placeId, player)
         return
     end
@@ -97,28 +95,35 @@ local function findGoodServer()
         end
     end
 
-    warn("⚠️ Không có server ngon → random")
     TeleportService:Teleport(placeId, player)
 end
 
-hopBtn.MouseButton1Click:Connect(function()
-    print("🔍 Đang tìm server...")
-    findGoodServer()
-end)
+hopBtn.MouseButton1Click:Connect(findGoodServer)
 
 --------------------------------------------------
--- 🏠 AUTO FIND BASE (KHÔNG CẦN TOẠ ĐỘ)
-local function findBase()
+-- 🧠 TÌM BASE CỦA CHÍNH BẠN
+local function findMyBase()
+    local myName = string.lower(player.Name)
+
     for _,obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
+        if obj:IsA("Model") or obj:IsA("Folder") then
             local name = string.lower(obj.Name)
 
-            -- các từ khóa base phổ biến
-            if name:find("base") 
-            or name:find("home")
-            or name:find("tycoon")
-            or name:find("plot") then
-                return obj.Position
+            -- 🎯 Ưu tiên base có tên bạn
+            if name:find(myName) then
+                local part = obj:FindFirstChildWhichIsA("BasePart")
+                if part then
+                    return part.Position
+                end
+            end
+
+            -- 🎯 check Owner
+            local owner = obj:FindFirstChild("Owner")
+            if owner and owner.Value == player then
+                local part = obj:FindFirstChildWhichIsA("BasePart")
+                if part then
+                    return part.Position
+                end
             end
         end
     end
@@ -135,12 +140,12 @@ baseBtn.MouseButton1Click:Connect(function()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    local basePos = findBase()
+    local pos = findMyBase()
 
-    if basePos then
-        hrp.CFrame = CFrame.new(basePos + Vector3.new(0,3,0))
-        print("🏠 Đã tìm và TP tới base")
+    if pos then
+        hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+        print("🏠 TP đúng base của bạn")
     else
-        warn("❌ Không tìm thấy base")
+        warn("❌ Không tìm thấy base của bạn")
     end
-end)  
+end)
