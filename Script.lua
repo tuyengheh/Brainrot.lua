@@ -1,104 +1,128 @@
 # Brainrot.lua
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
-local Http = game:GetService("HttpService")
-local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
-local PlaceID = game.PlaceId
-local TARGET_SPEED = 50
+local LocalPlayer = Players.LocalPlayer
 
--- UI
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 250, 0, 150)
-Frame.Position = UDim2.new(0.3,0,0.3,0)
-Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-Frame.Active = true
-Frame.Draggable = true
+-- ===== PET LIST =====
+local PET_LIST = {
+    "griffin",
+    "hydra dragon cannelloni",
+    "dragon gingerini",
+    "skibidi toilet",
+    "garama",
+    "madundung",
+    "la secret combination"
+}
 
-local Title = Instance.new("TextLabel", Frame)
-Title.Size = UDim2.new(1,0,0,30)
-Title.Text = "Brainrot Finder"
-Title.BackgroundColor3 = Color3.fromRGB(50,50,50)
-Title.TextColor3 = Color3.new(1,1,1)
+local selectedPet = "griffin"
+local ESP_ON = true
 
-local Status = Instance.new("TextLabel", Frame)
-Status.Size = UDim2.new(1,0,0,30)
-Status.Position = UDim2.new(0,0,0,40)
-Status.Text = "Status: Idle"
-Status.TextColor3 = Color3.new(1,1,1)
-Status.BackgroundTransparency = 1
+-- ===== UI =====
+local gui = Instance.new("ScreenGui", game.CoreGui)
 
-local StartBtn = Instance.new("TextButton", Frame)
-StartBtn.Size = UDim2.new(1,-20,0,30)
-StartBtn.Position = UDim2.new(0,10,0,80)
-StartBtn.Text = "Start Scan"
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,280,0,200)
+frame.Position = UDim2.new(0.35,0,0.35,0)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,25)
+frame.Active = true
+frame.Draggable = true
 
-local JoinBtn = Instance.new("TextButton", Frame)
-JoinBtn.Size = UDim2.new(1,-20,0,30)
-JoinBtn.Position = UDim2.new(0,10,0,120)
-JoinBtn.Text = "JOIN SERVER"
-JoinBtn.Visible = false
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
 
--- check pet
-local function HasGoodPet(player)
-    local folders = {
-        player:FindFirstChild("Leaderstats"),
-        player:FindFirstChild("Data"),
-        player:FindFirstChild("Pets"),
-        player:FindFirstChild("Inventory")
-    }
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Color3.fromRGB(0,255,150)
+stroke.Thickness = 2
 
-    for _,folder in pairs(folders) do
-        if folder then
-            for _,v in pairs(folder:GetDescendants()) do
-                if v:IsA("NumberValue") and v.Value >= TARGET_SPEED then
-                    return true
-                end
-            end
-        end
-    end
-    return false
+-- title
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,35)
+title.Text = "🔥 SĂN PET PRO"
+title.TextColor3 = Color3.fromRGB(0,255,150)
+title.BackgroundTransparency = 1
+
+-- dropdown button
+local dropdownBtn = Instance.new("TextButton", frame)
+dropdownBtn.Size = UDim2.new(1,-20,0,35)
+dropdownBtn.Position = UDim2.new(0,10,0,40)
+dropdownBtn.Text = "Pet: "..selectedPet
+dropdownBtn.BackgroundColor3 = Color3.fromRGB(30,30,40)
+dropdownBtn.TextColor3 = Color3.new(1,1,1)
+
+Instance.new("UICorner", dropdownBtn).CornerRadius = UDim.new(0,8)
+
+-- dropdown list
+local dropdown = Instance.new("Frame", frame)
+dropdown.Size = UDim2.new(1,-20,0,0)
+dropdown.Position = UDim2.new(0,10,0,80)
+dropdown.BackgroundColor3 = Color3.fromRGB(25,25,35)
+dropdown.ClipsDescendants = true
+
+Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0,8)
+
+local layout = Instance.new("UIListLayout", dropdown)
+
+-- tạo item
+for _,pet in pairs(PET_LIST) do
+    local btn = Instance.new("TextButton", dropdown)
+    btn.Size = UDim2.new(1,0,0,30)
+    btn.Text = pet
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,50)
+    btn.TextColor3 = Color3.new(1,1,1)
+
+    btn.MouseButton1Click:Connect(function()
+        selectedPet = pet
+        dropdownBtn.Text = "Pet: "..pet
+
+        TweenService:Create(dropdown, TweenInfo.new(0.3), {Size = UDim2.new(1,-20,0,0)}):Play()
+    end)
 end
 
-local foundServer = false
+-- toggle dropdown
+local open = false
+dropdownBtn.MouseButton1Click:Connect(function()
+    open = not open
+    local size = open and 120 or 0
 
-local function CheckServer()
-    for _,plr in pairs(Players:GetPlayers()) do
-        if HasGoodPet(plr) then
-            Status.Text = "✅ Found: "..plr.Name
-            foundServer = true
-            JoinBtn.Visible = true
-            return true
-        end
-    end
-    return false
-end
-
-local function ServerHop()
-    local req = Http:JSONDecode(game:HttpGet(
-        "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
-    ))
-
-    for _,v in pairs(req.data) do
-        if v.playing < v.maxPlayers then
-            TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
-            break
-        end
-    end
-end
-
-StartBtn.MouseButton1Click:Connect(function()
-    Status.Text = "🔍 Scanning..."
-    wait(2)
-
-    if not CheckServer() then
-        Status.Text = "❌ Not found → hopping..."
-        wait(1)
-        ServerHop()
-    end
+    TweenService:Create(dropdown, TweenInfo.new(0.3), {
+        Size = UDim2.new(1,-20,0,size)
+    }):Play()
 end)
 
-JoinBtn.MouseButton1Click:Connect(function()
-    Status.Text = "🔥 Stay this server!"
+-- ESP toggle
+local espBtn = Instance.new("TextButton", frame)
+espBtn.Size = UDim2.new(1,-20,0,35)
+espBtn.Position = UDim2.new(0,10,0,170)
+espBtn.Text = "ESP: ON"
+espBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+espBtn.TextColor3 = Color3.new(1,1,1)
+
+Instance.new("UICorner", espBtn).CornerRadius = UDim.new(0,8)
+
+espBtn.MouseButton1Click:Connect(function()
+    ESP_ON = not ESP_ON
+    espBtn.Text = ESP_ON and "ESP: ON" or "ESP: OFF"
+end)
+
+-- highlight
+local function Highlight(plr)
+    if not ESP_ON then return end
+
+    if plr.Character and not plr.Character:FindFirstChild("Highlight") then
+        local hl = Instance.new("Highlight")
+        hl.FillColor = Color3.fromRGB(255,0,0)
+        hl.Parent = plr.Character
+    end
+end
+
+-- test loop (demo)
+task.spawn(function()
+    while true do
+        for _,plr in pairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer then
+                Highlight(plr)
+            end
+        end
+        task.wait(2)
+    end
 end)
