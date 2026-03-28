@@ -3,7 +3,6 @@ local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
@@ -21,7 +20,7 @@ Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "Auto Farm PRO"
+title.Text = "VIP Server Finder"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
@@ -54,13 +53,14 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
+--------------------------------------------------
 -- BUTTON
 local function createBtn(text,y)
     local b = Instance.new("TextButton", frame)
     b.Size = UDim2.new(0.8,0,0,40)
     b.Position = UDim2.new(0.1,0,0,y)
     b.Text = text
-    b.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    b.BackgroundColor3 = Color3.fromRGB(80,50,50)
     b.TextColor3 = Color3.new(1,1,1)
     b.Font = Enum.Font.GothamBold
     b.TextScaled = true
@@ -68,97 +68,48 @@ local function createBtn(text,y)
     return b
 end
 
-local hopBtn = createBtn("Tìm Server Ngon", 50)
+local vipBtn = createBtn("Tìm Server VIP 🔥", 50)
 
 --------------------------------------------------
--- 🔍 HOP SERVER NGON
-local function findGoodServer()
+-- 🔥 VIP SERVER FINDER
+local searching = false
+
+local function findVIPServer()
     local placeId = game.PlaceId
 
-    local success, result = pcall(function()
-        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
-    end)
+    while searching do
+        local success, result = pcall(function()
+            return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
+        end)
 
-    if not success then
-        TeleportService:Teleport(placeId, player)
-        return
-    end
+        if success then
+            local data = HttpService:JSONDecode(result)
 
-    local data = HttpService:JSONDecode(result)
+            for _,v in pairs(data.data) do
+                -- 🎯 server xịn: gần full + còn slot
+                if v.playing >= (v.maxPlayers - 2) and v.playing < v.maxPlayers then
+                    print("🔥 VIP SERVER:", v.playing.."/"..v.maxPlayers)
 
-    for _,v in pairs(data.data) do
-        if v.playing >= 4 and v.playing <= 8 then
-            TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
-            return
-        end
-    end
-
-    TeleportService:Teleport(placeId, player)
-end
-
-hopBtn.MouseButton1Click:Connect(findGoodServer)
-
---------------------------------------------------
--- 🧠 TÌM BASE CỦA BẠN
-local function findMyBase()
-    local myName = string.lower(player.Name)
-
-    for _,obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") or obj:IsA("Folder") then
-            local name = string.lower(obj.Name)
-
-            if name:find(myName) then
-                local part = obj:FindFirstChildWhichIsA("BasePart")
-                if part then return part.Position end
-            end
-
-            local owner = obj:FindFirstChild("Owner")
-            if owner and owner.Value == player then
-                local part = obj:FindFirstChildWhichIsA("BasePart")
-                if part then return part.Position end
+                    TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
+                    return
+                end
             end
         end
+
+        print("🔍 Đang tìm server VIP...")
+        task.wait(2)
     end
-
-    return nil
 end
 
 --------------------------------------------------
--- 🧲 CHECK ĐANG CẦM PET
-local function isHoldingPet()
-    local char = player.Character
-    if not char then return false end
+-- BUTTON CLICK
+vipBtn.MouseButton1Click:Connect(function()
+    searching = not searching
 
-    for _,v in pairs(char:GetChildren()) do
-        if v:IsA("Model") then
-            return true
-        end
-    end
-
-    return false
-end
-
---------------------------------------------------
--- 🚶 AUTO CHẠY VỀ BASE
-local function moveToBase()
-    local char = player.Character
-    if not char then return end
-
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-
-    if not humanoid or not hrp then return end
-
-    local basePos = findMyBase()
-    if not basePos then return end
-
-    humanoid:MoveTo(basePos)
-end
-
---------------------------------------------------
--- 🔁 AUTO LOOP
-RunService.RenderStepped:Connect(function()
-    if isHoldingPet() then
-        moveToBase()
+    if searching then
+        vipBtn.Text = "Đang tìm... 🔍"
+        findVIPServer()
+    else
+        vipBtn.Text = "Tìm Server VIP 🔥"
     end
 end)
