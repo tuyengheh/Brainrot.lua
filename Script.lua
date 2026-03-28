@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
@@ -13,7 +14,7 @@ local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 260, 0, 180)
+frame.Size = UDim2.new(0, 260, 0, 140)
 frame.Position = UDim2.new(0.5, -130, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 frame.BorderSizePixel = 0
@@ -21,7 +22,7 @@ Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "Server + Base PRO"
+title.Text = "Auto Farm PRO"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
@@ -68,8 +69,7 @@ local function createBtn(text,y)
     return b
 end
 
-local hopBtn = createBtn("Tìm Server Ngon", 40)
-local baseBtn = createBtn("TP Base Của Mình", 95)
+local hopBtn = createBtn("Tìm Server Ngon", 50)
 
 --------------------------------------------------
 -- 🔍 HOP SERVER NGON
@@ -89,7 +89,6 @@ local function findGoodServer()
 
     for _,v in pairs(data.data) do
         if v.playing >= 4 and v.playing <= 8 then
-            print("✅ Server:", v.playing.."/"..v.maxPlayers)
             TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
             return
         end
@@ -126,8 +125,23 @@ local function findMyBase()
 end
 
 --------------------------------------------------
--- 🚀 TELEPORT BASE (ĐI BỘ THẬT - FIX 100%)
-local function teleportBase(pos)
+-- 🧲 CHECK ĐANG CẦM PET
+local function isHoldingPet()
+    local char = player.Character
+    if not char then return false end
+
+    for _,v in pairs(char:GetChildren()) do
+        if v:IsA("Model") then
+            return true
+        end
+    end
+
+    return false
+end
+
+--------------------------------------------------
+-- 🚶 AUTO CHẠY VỀ BASE
+local function moveToBase()
     local char = player.Character
     if not char then return end
 
@@ -136,28 +150,16 @@ local function teleportBase(pos)
 
     if not humanoid or not hrp then return end
 
-    print("🚶 Đang chạy về base...")
+    local basePos = findMyBase()
+    if not basePos then return end
 
-    local distance = (pos - hrp.Position).Magnitude
-    local steps = math.clamp(math.floor(distance / 15), 5, 40)
-
-    for i = 1, steps do
-        local nextPos = hrp.Position:Lerp(pos, i / steps)
-        humanoid:MoveTo(nextPos)
-        humanoid.MoveToFinished:Wait(0.3)
-    end
-
-    humanoid:MoveTo(pos)
+    humanoid:MoveTo(basePos)
 end
 
 --------------------------------------------------
--- BUTTON TP BASE
-baseBtn.MouseButton1Click:Connect(function()
-    local pos = findMyBase()
-
-    if pos then
-        teleportBase(pos)
-    else
-        warn("❌ Không tìm thấy base")
+-- 🔁 AUTO LOOP
+RunService.RenderStepped:Connect(function()
+    if isHoldingPet() then
+        moveToBase()
     end
 end)
