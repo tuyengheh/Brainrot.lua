@@ -1,71 +1,81 @@
 # Brainrot.lua 
 -- Services
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
-
 local player = Players.LocalPlayer
 
--- GUI
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "BrainrotHelper"
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Change Server Button
-local changeServerBtn = Instance.new("TextButton", screenGui)
-changeServerBtn.Size = UDim2.new(0, 200, 0, 50)
-changeServerBtn.Position = UDim2.new(0, 50, 0, 50)
-changeServerBtn.Text = "Server Hop"
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 150)
+mainFrame.Position = UDim2.new(0.5, -125, 0.3, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+mainFrame.BackgroundTransparency = 0.1
+mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = screenGui
+mainFrame.AnchorPoint = Vector2.new(0.5, 0)
 
--- Check Pets Button
-local checkPetsBtn = Instance.new("TextButton", screenGui)
-checkPetsBtn.Size = UDim2.new(0, 200, 0, 50)
-checkPetsBtn.Position = UDim2.new(0, 50, 0, 120)
-checkPetsBtn.Text = "Check Brainrots"
+-- Rounded corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 15)
+corner.Parent = mainFrame
 
--- Server Hop
-changeServerBtn.MouseButton1Click:Connect(function()
-    local placeId = game.PlaceId
-    local success, response = pcall(function()
-        return HttpService:GetAsync("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?sortOrder=Asc&limit=100")
-    end)
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.Text = "Brainrot Helper"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+title.Parent = mainFrame
 
-    if success then
-        local data = HttpService:JSONDecode(response)
-        local serverList = {}
+-- Function to create buttons
+local function createButton(text, posY)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.8, 0, 0, 40)
+    btn.Position = UDim2.new(0.1, 0, 0, posY)
+    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextScaled = true
+    btn.Text = text
 
-        for _, server in ipairs(data.data) do
-            if server.playing < server.maxPlayers then
-                table.insert(serverList, server.id)
-            end
-        end
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = btn
 
-        if #serverList > 0 then
-            local chosen = serverList[math.random(1, #serverList)]
-            TeleportService:TeleportToPlaceInstance(placeId, chosen, player)
-        else
-            warn("No empty servers found!")
-        end
-    else
-        warn("Failed getting server list!")
-    end
+    btn.Parent = mainFrame
+    return btn
+end
+
+-- Buttons
+local hopBtn = createButton("Server Hop", 40)
+local checkBtn = createButton("Check Brainrots", 90)
+
+-- Server Hop (simple, chắc chắn chạy mobile)
+hopBtn.MouseButton1Click:Connect(function()
+    TeleportService:Teleport(game.PlaceId, player)
 end)
 
 -- Check Brainrots
-checkPetsBtn.MouseButton1Click:Connect(function()
+checkBtn.MouseButton1Click:Connect(function()
     local found = {}
 
-    -- Bạn chỉnh theo đúng nơi game lưu brainrots
-    local brainrotFolder = workspace:FindFirstChild("BrainrotsFolder")
+    -- Tìm đúng folder brainrots trong game
+    local brainrotFolder = workspace:FindFirstChild("BrainrotsFolder") -- Thay đúng tên
     if brainrotFolder then
         for _, obj in pairs(brainrotFolder:GetChildren()) do
             table.insert(found, obj.Name)
         end
+        print("Brainrots trong server: "..table.concat(found, ", "))
     else
-        print("Brainrot folder not found!")
-    end
-
-    if #found > 0 then
-        print("Brainrots in server:", table.concat(found, ", "))
-    else
-        print("No brainrots found.")
+        print("Không tìm thấy Brainrot folder!")
     end
 end)
