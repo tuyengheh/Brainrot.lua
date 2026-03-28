@@ -1,33 +1,22 @@
+ --// SERVICES
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
 --------------------------------------------------
--- ⚙️ LIST BRAINROT HIẾM (bạn thêm vào đây)
+-- ⚙️ LIST BẠN GỬI (OK RỒI)
 local rareList = {
-    "Garama and Madundung",
-    "Ketchuru and Musturu",
-    "La Secret Combinasion",
-    "Lavadorito Spinito",
-    "Tang Tang Keletang",
-    "Tictac Sahur",
-    "Spaghetti Tualetti",
-    "Eviledon",
-    "Los Spaghettis",
-    "Spooky and Pumpky",
-    "67",
-    "Esok Sekolah",
-    "La Grande Combinasion",
-    "Strawberry Elephant",
-    "Meowl",
-    "Skibidi Toilet",
-    "Cigno Fulgoro"
+    "Garama and Madundung","Ketchuru and Musturu","La Secret Combinasion",
+    "Lavadorito Spinito","Tang Tang Keletang","Tictac Sahur",
+    "Spaghetti Tualetti","Eviledon","Los Spaghettis","Spooky and Pumpky",
+    "67","Esok Sekolah","La Grande Combinasion","Strawberry Elephant",
+    "Meowl","Skibidi Toilet","Cigno Fulgoro"
 }
 
 --------------------------------------------------
--- 🎯 CHECK NAME TRONG LIST
+-- 🎯 CHECK RARE (chuẩn hơn)
 local function isRare(name)
     for _,v in pairs(rareList) do
-        if string.lower(name) == string.lower(v) then
+        if string.lower(name):find(string.lower(v)) then
             return true
         end
     end
@@ -35,30 +24,37 @@ local function isRare(name)
 end
 
 --------------------------------------------------
--- ✨ ESP FUNCTION
-local function createESP(obj, isRareObj)
-    if not obj or not obj:IsA("Model") then return end
+-- 📦 TRÁNH ESP TRÙNG
+local espCache = {}
+
+--------------------------------------------------
+-- ✨ ESP
+local function createESP(obj)
+    if espCache[obj] then return end
+    espCache[obj] = true
 
     local part = obj:FindFirstChildWhichIsA("BasePart")
     if not part then return end
 
-    -- 🔥 GLOW
+    local rare = isRare(obj.Name)
+
+    -- 🔥 HIGHLIGHT
     local hl = Instance.new("Highlight")
     hl.Adornee = obj
-    hl.FillTransparency = 0.5
+    hl.FillTransparency = 0.4
     hl.OutlineTransparency = 0
 
-    if isRareObj then
-        hl.FillColor = Color3.fromRGB(255, 0, 0) -- đỏ = hiếm
+    if rare then
+        hl.FillColor = Color3.fromRGB(255, 50, 50)
     else
-        hl.FillColor = Color3.fromRGB(0, 170, 255) -- xanh thường
+        hl.FillColor = Color3.fromRGB(0, 170, 255)
     end
 
     hl.Parent = obj
 
     -- 🏷️ NAME TAG
     local bill = Instance.new("BillboardGui")
-    bill.Size = UDim2.new(0,100,0,40)
+    bill.Size = UDim2.new(0,120,0,40)
     bill.AlwaysOnTop = true
     bill.Adornee = part
     bill.StudsOffset = Vector3.new(0,3,0)
@@ -70,8 +66,9 @@ local function createESP(obj, isRareObj)
     text.TextScaled = true
     text.Font = Enum.Font.GothamBold
 
-    if isRareObj then
-        text.TextColor3 = Color3.new(1,0,0)
+    if rare then
+        text.TextColor3 = Color3.fromRGB(255,0,0)
+        warn("🔥 FOUND RARE:", obj.Name)
     else
         text.TextColor3 = Color3.new(1,1,1)
     end
@@ -80,29 +77,23 @@ local function createESP(obj, isRareObj)
 end
 
 --------------------------------------------------
--- 🔍 SCAN
-local function scanBrainrot()
-    print("🔍 Đang scan...")
-
+-- 🔍 SCAN CHUẨN
+local function scan()
     for _,obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("Model") then
-            local name = obj.Name
-
-            if string.find(string.lower(name),"brain") 
-            or string.find(string.lower(name),"pet") then
-
-                local rare = isRare(name)
-
-                createESP(obj, rare)
-
-                if rare then
-                    warn("🔥 FOUND RARE:", name)
-                end
+            -- chỉ cần model có part là check luôn
+            if obj:FindFirstChildWhichIsA("BasePart") then
+                createESP(obj)
             end
         end
     end
 end
 
 --------------------------------------------------
--- ▶️ CHẠY
-scanBrainrot()
+-- 🔁 AUTO SCAN LIÊN TỤC
+task.spawn(function()
+    while true do
+        task.wait(3)
+        scan()
+    end
+end)
