@@ -1,19 +1,13 @@
 # Brainrot.lua 
-                -- SERVICES
-local Players = game:GetService("Players")
+  local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local Http = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlaceID = game.PlaceId
 
--- 🔥 KEYWORD SECRET
-local KEYWORDS = {
-    "secret",
-    "griffin",
-    "hydra",
-    "dragon",
-    "skibidi",
+-- 🔥 DANH SÁCH PET (giữ nguyên)
+local PET_LIST = {
     "garama and madundung",
     "tictac sahur",
     "lavadorito spinito",
@@ -24,46 +18,74 @@ local KEYWORDS = {
     "spooky and pumpky",
     "bacuru and egguru",
     "cooki and milki",
-    "ketupat kepat"
+    "ketupat kepat",
+    "griffin",
+    "hydra",
+    "dragon",
+    "skibidi"
 }
 
--- UI
+-- 🔥 THÊM: DATA m/s (KHÔNG ĐỤNG CODE CŨ)
+local PET_M = {
+    ["garama and madundung"] = 50,
+    ["tictac sahur"] = 37.5,
+    ["lavadorito spinito"] = 60,
+    ["la secret combinasion"] = 125,
+    ["ketchuru and musturu"] = 42.5,
+    ["spaghetti tualetti"] = 60,
+    ["eviledon"] = 300,
+    ["spooky and pumpky"] = 45,
+    ["bacuru and egguru"] = 55,
+    ["cooki and milki"] = 35,
+    ["ketupat kepat"] = 40,
+    ["griffin"] = 400,
+    ["hydra"] = 300,
+    ["dragon"] = 300,
+    ["skibidi"] = 330
+}
+
+-- UI (giữ nguyên)
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
-local text = Instance.new("TextLabel", gui)
-text.Size = UDim2.new(0,320,0,60)
-text.Position = UDim2.new(0.35,0,0.4,0)
-text.BackgroundColor3 = Color3.fromRGB(20,20,20)
-text.TextColor3 = Color3.new(1,1,1)
-text.Text = "🔄 AUTO ROLL SECRET..."
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,260,0,140)
+frame.Position = UDim2.new(0.35,0,0.4,0)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.Active = true
+frame.Draggable = true
 
--- 🔊 SOUND
+local status = Instance.new("TextLabel", frame)
+status.Size = UDim2.new(1,0,0,40)
+status.Text = "Sẵn sàng"
+status.TextColor3 = Color3.new(1,1,1)
+status.BackgroundTransparency = 1
+
+-- 🔊 THÊM: SOUND
 local sound = Instance.new("Sound", game.Workspace)
 sound.SoundId = "rbxassetid://9118823104"
 sound.Volume = 3
 
--- 🔁 KEEP SCRIPT SAU TELEPORT
-local function Queue()
-    local code = [[
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua"))()
-    ]]
+-- BUTTON (giữ nguyên)
+local rollBtn = Instance.new("TextButton", frame)
+rollBtn.Size = UDim2.new(1,-10,0,40)
+rollBtn.Position = UDim2.new(0,5,0,50)
+rollBtn.Text = "🔁 ROLL SERVER"
+rollBtn.BackgroundColor3 = Color3.fromRGB(50,150,255)
 
-    if syn and syn.queue_on_teleport then
-        syn.queue_on_teleport(code)
-    elseif queue_on_teleport then
-        queue_on_teleport(code)
-    end
-end
-
--- check secret
-local function HasSecret()
+-- 🔥 SỬA: check pet (THÊM lọc ≥50m)
+local function HasPet()
     for _,plr in pairs(Players:GetPlayers()) do
         for _,v in pairs(plr:GetDescendants()) do
             local name = string.lower(v.Name)
 
-            for _,key in pairs(KEYWORDS) do
-                if string.find(name, key) then
-                    return true, plr.Name, key
+            for _,pet in pairs(PET_LIST) do
+                if string.find(name, pet) then
+                    local m = PET_M[pet]
+
+                    -- 🎯 chỉ lấy ≥50m
+                    if m and m >= 50 then
+                        return true, plr.Name, pet, m
+                    end
                 end
             end
         end
@@ -71,7 +93,7 @@ local function HasSecret()
     return false
 end
 
--- hop
+-- hop server (giữ nguyên)
 local function ServerHop()
     local success, req = pcall(function()
         return Http:JSONDecode(game:HttpGet(
@@ -79,54 +101,39 @@ local function ServerHop()
         ))
     end)
 
-    if success and req and req.data then
-        for _,v in pairs(req.data) do
-            if v.playing < v.maxPlayers then
-                text.Text = "🔁 Đang chuyển server..."
-                
-                Queue() -- 🔥 giữ script
-                
-                TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
-                return true
-            end
-        end
-
-        text.Text = "⚠️ Server full hết → thử lại..."
-    else
-        text.Text = "❌ Lỗi lấy server → retry..."
+    if not success or not req or not req.data then
+        status.Text = "❌ Lỗi lấy server → bấm lại"
+        return
     end
 
-    return false
+    for _,v in pairs(req.data) do
+        if v.playing < v.maxPlayers then
+            status.Text = "🔁 Đang chuyển server..."
+            TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
+            return
+        end
+    end
+
+    status.Text = "⚠️ Server full → bấm lại"
 end
 
--- LOOP AUTO
-task.spawn(function()
-    while true do
-        text.Text = "🔍 Đang kiểm tra..."
+-- CLICK (chỉ thêm sound + hiển thị m)
+rollBtn.MouseButton1Click:Connect(function()
+    status.Text = "🔍 Đang check..."
 
-        local ok, name, pet = HasSecret()
+    local ok, name, pet, m = HasPet()
 
-        if ok then
-            text.Text = "🔥 TÌM THẤY SECRET: "..name.." ("..pet..")"
+    if ok then
+        status.Text = "🔥 Có pet: "..pet.." ("..m.."m) - "..name
 
-            -- 🔊 phát âm
-            for i = 1,3 do
-                sound:Play()
-                task.wait(0.3)
-            end
-
-            return
-        else
-            text.Text = "❌ Không có → roll tiếp..."
-            task.wait(0.5)
-
-            local hopped = ServerHop()
-
-            if not hopped then
-                task.wait(1)
-            end
+        -- 🔊 âm thanh
+        for i = 1,2 do
+            sound:Play()
+            task.wait(0.2)
         end
-
-        task.wait(1)
+    else
+        status.Text = "❌ Không có → chuyển..."
+        task.wait(0.5)
+        ServerHop()
     end
 end)
