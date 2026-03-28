@@ -1,66 +1,70 @@
-    -- GUI Setup (ScreenGui + 2 Buttons)
+-- Services
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
-local LocalPlayer = Players.LocalPlayer
 
-local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+local player = Players.LocalPlayer
 
--- Nút đổi server cực mới
-local ChangeServerButton = Instance.new("TextButton", ScreenGui)
-ChangeServerButton.Size = UDim2.new(0, 200, 0, 50)
-ChangeServerButton.Position = UDim2.new(0, 50, 0, 50)
-ChangeServerButton.Text = "Đổi Server Mới"
+-- GUI
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
--- Nút check all pet
-local CheckPetButton = Instance.new("TextButton", ScreenGui)
-CheckPetButton.Size = UDim2.new(0, 200, 0, 50)
-CheckPetButton.Position = UDim2.new(0, 50, 0, 120)
-CheckPetButton.Text = "Check All Pet"
+-- Change Server Button
+local changeServerBtn = Instance.new("TextButton", screenGui)
+changeServerBtn.Size = UDim2.new(0, 200, 0, 50)
+changeServerBtn.Position = UDim2.new(0, 50, 0, 50)
+changeServerBtn.Text = "Server Hop"
 
--- Function đổi server
-ChangeServerButton.MouseButton1Click:Connect(function()
-    -- Lấy ID game hiện tại
-    local PlaceID = game.PlaceId
-    local JobId
-    local Servers = {}
-    
-    -- Gọi API Roblox lấy server list
-    local Success, Response = pcall(function()
-        return HttpService:GetAsync("https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100")
+-- Check Pets Button
+local checkPetsBtn = Instance.new("TextButton", screenGui)
+checkPetsBtn.Size = UDim2.new(0, 200, 0, 50)
+checkPetsBtn.Position = UDim2.new(0, 50, 0, 120)
+checkPetsBtn.Text = "Check Brainrots"
+
+-- Server Hop
+changeServerBtn.MouseButton1Click:Connect(function()
+    local placeId = game.PlaceId
+    local success, response = pcall(function()
+        return HttpService:GetAsync("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?sortOrder=Asc&limit=100")
     end)
 
-    if Success then
-        local Data = HttpService:JSONDecode(Response)
-        for _, v in pairs(Data.data) do
-            if v.playing < v.maxPlayers then
-                table.insert(Servers, v.id)
+    if success then
+        local data = HttpService:JSONDecode(response)
+        local serverList = {}
+
+        for _, server in ipairs(data.data) do
+            if server.playing < server.maxPlayers then
+                table.insert(serverList, server.id)
             end
         end
-    end
 
-    -- Chọn server ngẫu nhiên từ list còn slot
-    if #Servers > 0 then
-        JobId = Servers[math.random(1,#Servers)]
-        TeleportService:TeleportToPlaceInstance(PlaceID, JobId, LocalPlayer)
+        if #serverList > 0 then
+            local chosen = serverList[math.random(1, #serverList)]
+            TeleportService:TeleportToPlaceInstance(placeId, chosen, player)
+        else
+            warn("No empty servers found!")
+        end
     else
-        warn("Không tìm được server trống!")
+        warn("Failed getting server list!")
     end
 end)
 
--- Function check pet trong server
-CheckPetButton.MouseButton1Click:Connect(function()
-    local PetList = {} -- lưu pet hiện có
-    -- Giả sử mỗi pet là child của workspace.Pets
-    if workspace:FindFirstChild("Pets") then
-        for _, pet in pairs(workspace.Pets:GetChildren()) do
-            table.insert(PetList, pet.Name)
+-- Check Brainrots
+checkPetsBtn.MouseButton1Click:Connect(function()
+    local found = {}
+
+    -- Bạn chỉnh theo đúng nơi game lưu brainrots
+    local brainrotFolder = workspace:FindFirstChild("BrainrotsFolder")
+    if brainrotFolder then
+        for _, obj in pairs(brainrotFolder:GetChildren()) do
+            table.insert(found, obj.Name)
         end
+    else
+        print("Brainrot folder not found!")
     end
 
-    if #PetList > 0 then
-        print("Pet hiện có trong server: "..table.concat(PetList, ", "))
+    if #found > 0 then
+        print("Brainrots in server:", table.concat(found, ", "))
     else
-        print("Không tìm thấy pet nào trong server này.")
+        print("No brainrots found.")
     end
 end)
