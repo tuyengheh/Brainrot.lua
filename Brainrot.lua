@@ -1,23 +1,21 @@
---// SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local UIS = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
+local currentServerId = game.JobId
 
 --------------------------------------------------
--- 🎨 GUI
+-- GUI như trước
 local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
-
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 260, 0, 140)
-frame.Position = UDim2.new(0.5, -130, 0.3, 0)
+frame.Size = UDim2.new(0,260,0,140)
+frame.Position = UDim2.new(0.5,-130,0.3,0)
 frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 frame.BorderSizePixel = 0
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
-
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
 title.Text = "Server Finder PRO"
@@ -40,7 +38,6 @@ frame.InputBegan:Connect(function(input)
         end)
     end
 end)
-
 UIS.InputChanged:Connect(function(input)
     if dragging then
         local delta = input.Position - dragStart
@@ -53,7 +50,6 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
---------------------------------------------------
 -- BUTTON
 local function createBtn(text,y)
     local b = Instance.new("TextButton", frame)
@@ -71,7 +67,7 @@ end
 local hopBtn = createBtn("Tìm Server Ngon 🔥", 50)
 
 --------------------------------------------------
--- 🔥 HOP SERVER NGON (BẤM LÀ NHẢY)
+-- HOP SERVER KHÔNG TRÙNG SERVER CŨ
 local function hopServer()
     local placeId = game.PlaceId
 
@@ -81,12 +77,11 @@ local function hopServer()
 
     if success then
         local data = HttpService:JSONDecode(result)
-
         local bestServer = nil
         local bestPlayers = 0
 
         for _,v in pairs(data.data) do
-            if v.playing < v.maxPlayers then
+            if v.playing < v.maxPlayers and v.id ~= currentServerId then
                 if v.playing > bestPlayers then
                     bestPlayers = v.playing
                     bestServer = v
@@ -95,14 +90,14 @@ local function hopServer()
         end
 
         if bestServer then
-            print("🔥 Server ngon:", bestServer.playing.."/"..bestServer.maxPlayers)
+            print("🔥 Hop Server:", bestServer.playing.."/"..bestServer.maxPlayers)
             TeleportService:TeleportToPlaceInstance(placeId, bestServer.id, player)
             return
         end
     end
 
-    -- fallback nếu lỗi
-    print("⚠️ Lỗi → hop random")
+    -- fallback nếu không tìm server mới
+    print("⚠️ Không có server khác → hop random")
     TeleportService:Teleport(placeId, player)
 end
 
