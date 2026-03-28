@@ -3,13 +3,13 @@
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
-local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 local currentServerId = game.JobId
 
 --------------------------------------------------
--- 🎯 PET HIẾM (bạn có thể thêm)
+-- 🎯 LIST PET HIẾM
 local rareList = {
     "Garama and Madundung",
     "Ketchuru and Musturu",
@@ -28,8 +28,17 @@ local rareList = {
     "Cigno Fulgoro"
 }
 
+local function isRare(name)
+    for _,v in pairs(rareList) do
+        if string.lower(name) == string.lower(v) then
+            return true
+        end
+    end
+    return false
+end
+
 --------------------------------------------------
--- 🎨 GUI
+-- 🌈 GUI
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 local frame = Instance.new("Frame", gui)
@@ -40,11 +49,18 @@ Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "Auto Scan Server 🔥"
+title.Text = "RAINBOW FARM 🌈"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
 title.TextScaled = true
+
+-- 🌈 Rainbow effect
+RunService.RenderStepped:Connect(function()
+    local t = tick()
+    local color = Color3.fromHSV((t % 5)/5,1,1)
+    frame.BackgroundColor3 = color
+end)
 
 local log = Instance.new("TextLabel", frame)
 log.Size = UDim2.new(1,0,0,80)
@@ -56,43 +72,56 @@ log.TextWrapped = true
 log.Font = Enum.Font.Gotham
 log.TextScaled = true
 
-local function createBtn(text,y)
-    local b = Instance.new("TextButton", frame)
-    b.Size = UDim2.new(0.8,0,0,35)
-    b.Position = UDim2.new(0.1,0,0,y)
-    b.Text = text
-    b.BackgroundColor3 = Color3.fromRGB(80,50,50)
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.GothamBold
-    b.TextScaled = true
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
-    return b
-end
-
-local startBtn = createBtn("Start Scan 🔥", 120)
+local btn = Instance.new("TextButton", frame)
+btn.Size = UDim2.new(0.8,0,0,35)
+btn.Position = UDim2.new(0.1,0,0,120)
+btn.Text = "START 🔥"
+btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+btn.TextColor3 = Color3.new(1,1,1)
+btn.Font = Enum.Font.GothamBold
+btn.TextScaled = true
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
 
 --------------------------------------------------
--- 🔍 CHECK PET HIẾM
-local function isRare(name)
-    for _,v in pairs(rareList) do
-        if string.lower(name) == string.lower(v) then
-            return true
-        end
-    end
-    return false
+-- ✨ ESP CHỈ PET HIẾM
+local function createESP(obj)
+    if not obj:IsA("Model") then return end
+    if not isRare(obj.Name) then return end
+
+    local part = obj:FindFirstChildWhichIsA("BasePart")
+    if not part then return end
+
+    local hl = Instance.new("Highlight")
+    hl.Adornee = obj
+    hl.FillColor = Color3.fromRGB(255,0,0)
+    hl.FillTransparency = 0.3
+    hl.OutlineTransparency = 0
+    hl.Parent = obj
+
+    local bill = Instance.new("BillboardGui")
+    bill.Size = UDim2.new(0,120,0,40)
+    bill.Adornee = part
+    bill.AlwaysOnTop = true
+
+    local txt = Instance.new("TextLabel", bill)
+    txt.Size = UDim2.new(1,0,1,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = "🔥 "..obj.Name
+    txt.TextColor3 = Color3.new(1,0,0)
+    txt.TextScaled = true
+    txt.Font = Enum.Font.GothamBold
+
+    bill.Parent = obj
 end
 
-local function scanPets()
-    for _,obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") then
-            local name = obj.Name
-
-            if string.find(string.lower(name),"brain") 
-            or string.find(string.lower(name),"pet") then
-
-                if isRare(name) then
-                    return true, name
-                end
+--------------------------------------------------
+-- 🔍 SCAN
+local function scan()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") then
+            if isRare(v.Name) then
+                createESP(v)
+                return true, v.Name
             end
         end
     end
@@ -100,8 +129,8 @@ local function scanPets()
 end
 
 --------------------------------------------------
--- 🔁 HOP SERVER
-local function hopServer()
+-- 🚀 HOP NHANH
+local function hop()
     local placeId = game.PlaceId
 
     local success, result = pcall(function()
@@ -123,34 +152,33 @@ local function hopServer()
 end
 
 --------------------------------------------------
--- 🚀 AUTO LOOP
+-- 🔁 LOOP
 local running = false
 
-startBtn.MouseButton1Click:Connect(function()
+btn.MouseButton1Click:Connect(function()
     running = not running
 
     if running then
-        startBtn.Text = "Running..."
-        log.Text = "🔍 Đang scan server..."
+        btn.Text = "RUNNING..."
+        log.Text = "🔍 Scan..."
 
         task.spawn(function()
-            task.wait(2) -- đợi load map
+            task.wait(1.5)
 
-            local found, petName = scanPets()
+            local found, name = scan()
 
             if found then
-                log.Text = "🔥 FOUND: "..petName
-                startBtn.Text = "FOUND!"
+                log.Text = "🔥 FOUND: "..name
+                btn.Text = "FOUND!"
                 running = false
             else
-                log.Text = "❌ Không có pet hiếm → hop..."
-                task.wait(1)
-                hopServer()
+                log.Text = "❌ Không có → hop"
+                task.wait(0.5)
+                hop()
             end
         end)
-
     else
-        startBtn.Text = "Start Scan 🔥"
+        btn.Text = "START 🔥"
         log.Text = "Stopped"
     end
 end)
