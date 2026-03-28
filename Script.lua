@@ -1,64 +1,50 @@
-# Brainrot.lualocal Players = game:GetService("Players")
+# Brainrot.lua 
+local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local Http = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlaceID = game.PlaceId
 
--- CONFIG
-local MIN_M = 50
-local MAX_M = 800
-
--- PET DATA
-local PET_DATA = {
-    ["griffin"] = 400,
-    ["hydra dragon cannelloni"] = 300,
-    ["dragon gingerini"] = 300,
-    ["skibidi toilet"] = 330,
-    ["garama"] = 50,
-    ["madundung"] = 50,
-    ["la secret combination"] = 125,
-    ["ketchuru"] = 42.5,
-    ["musturu"] = 42.5,
-    ["tictac sahur"] = 37.5,
-    ["tang tang keletang"] = 33.5
+-- từ khóa secret
+local KEYWORDS = {
+    "secret",
+    "griffin",
+    "hydra",
+    "dragon",
+    "skibidi",
+    "Garama and Madundung",
+    "Tictac Sahur",
+    "Lavadorito Spinito",
+    "La Secret Combinasion",
+    "Ketchuru and Musturu",
+    "Spaghetti Tualetti",
+    "Eviledon",
+    "Spooky and Pumpky",
+    "Bacuru and Egguru",
+    "Cooki and Milki",
+    "Ketupat Kepat"
 }
 
 -- UI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,260,0,140)
-frame.Position = UDim2.new(0.35,0,0.4,0)
-frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-frame.Active = true
-frame.Draggable = true
+local text = Instance.new("TextLabel", gui)
+text.Size = UDim2.new(0,300,0,50)
+text.Position = UDim2.new(0.35,0,0.4,0)
+text.BackgroundColor3 = Color3.fromRGB(20,20,20)
+text.TextColor3 = Color3.new(1,1,1)
+text.Text = "🔍 Đang săn SECRET..."
 
-local status = Instance.new("TextLabel", frame)
-status.Size = UDim2.new(1,0,0,40)
-status.Text = "Sẵn sàng roll server"
-status.TextColor3 = Color3.new(1,1,1)
-status.BackgroundTransparency = 1
-
--- BUTTON ROLL
-local rollBtn = Instance.new("TextButton", frame)
-rollBtn.Size = UDim2.new(1,-10,0,40)
-rollBtn.Position = UDim2.new(0,5,0,50)
-rollBtn.Text = "🔁 ROLL SERVER"
-rollBtn.BackgroundColor3 = Color3.fromRGB(50,150,255)
-rollBtn.TextColor3 = Color3.new(1,1,1)
-
--- check pet
-local function HasGoodPet()
+-- check secret
+local function HasSecret()
     for _,plr in pairs(Players:GetPlayers()) do
         for _,v in pairs(plr:GetDescendants()) do
             local name = string.lower(v.Name)
 
-            for pet, val in pairs(PET_DATA) do
-                if string.find(name, pet) then
-                    if val >= MIN_M and val <= MAX_M then
-                        return true, plr.Name, pet, val
-                    end
+            for _,key in pairs(KEYWORDS) do
+                if string.find(name, key) then
+                    return true, plr.Name, name
                 end
             end
         end
@@ -66,38 +52,37 @@ local function HasGoodPet()
     return false
 end
 
--- server hop (lọc server không full)
+-- hop
 local function ServerHop()
-    local success, req = pcall(function()
-        return Http:JSONDecode(game:HttpGet(
-            "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
-        ))
-    end)
+    local req = Http:JSONDecode(game:HttpGet(
+        "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
+    ))
 
-    if success and req and req.data then
-        for _,v in pairs(req.data) do
-            if v.playing < v.maxPlayers then
-                TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
-                return
-            end
+    for _,v in pairs(req.data) do
+        if v.playing < v.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
+            break
         end
     end
-
-    status.Text = "❌ Không tìm được server (bấm lại)"
 end
 
--- BUTTON CLICK
-rollBtn.MouseButton1Click:Connect(function()
-    status.Text = "🔍 Đang check server..."
+-- nút roll
+local btn = Instance.new("TextButton", gui)
+btn.Size = UDim2.new(0,300,0,50)
+btn.Position = UDim2.new(0.35,0,0.5,0)
+btn.Text = "🔁 Kiếm SECRET"
+btn.BackgroundColor3 = Color3.fromRGB(50,150,255)
 
-    local ok, name, pet, val = HasGoodPet()
+btn.MouseButton1Click:Connect(function()
+    text.Text = "🔍 Đang check..."
+
+    local ok, name, pet = HasSecret()
 
     if ok then
-        status.Text = "🔥 Server ngon: "..pet.." ("..val.."m)"
+        text.Text = "🔥 SECRET: "..name
     else
-        status.Text = "❌ Không có → chuyển..."
-        task.wait(0.5)
+        text.Text = "❌ Không có → chuyển server"
+        wait(1)
         ServerHop()
     end
 end)
-    
