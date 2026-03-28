@@ -68,8 +68,8 @@ local function createBtn(text,y)
     return b
 end
 
-local hopBtn = createBtn("Tìm Server 5-300m", 40)
-local baseBtn = createBtn("premium steal tp", 95)
+local hopBtn = createBtn("Tìm Server Ngon", 40)
+local baseBtn = createBtn("TP Base Của Mình", 95)
 
 --------------------------------------------------
 -- 🔍 HOP SERVER NGON
@@ -109,7 +109,6 @@ local function findMyBase()
         if obj:IsA("Model") or obj:IsA("Folder") then
             local name = string.lower(obj.Name)
 
-            -- 🎯 Ưu tiên base có tên bạn
             if name:find(myName) then
                 local part = obj:FindFirstChildWhichIsA("BasePart")
                 if part then
@@ -117,7 +116,6 @@ local function findMyBase()
                 end
             end
 
-            -- 🎯 check Owner
             local owner = obj:FindFirstChild("Owner")
             if owner and owner.Value == player then
                 local part = obj:FindFirstChildWhichIsA("BasePart")
@@ -132,19 +130,27 @@ local function findMyBase()
 end
 
 --------------------------------------------------
--- 🚀 TELEPORT BASE
-baseBtn.MouseButton1Click:Connect(function()
+-- 🚀 TELEPORT BASE (BYPASS CẦM PET)
+local function teleportBase(pos)
     local char = player.Character
     if not char then return end
 
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
+    -- spam để bypass anti khi đang cầm pet
+    for i = 1, 12 do
+        hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+        task.wait()
+    end
+end
+
+baseBtn.MouseButton1Click:Connect(function()
     local pos = findMyBase()
 
     if pos then
-        hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
-        print("🏠 TP đúng base của bạn")
+        teleportBase(pos)
+        print("🏠 TP về base (bypass thành công)")
     else
         warn("❌ Không tìm thấy base của bạn")
     end
