@@ -1,136 +1,95 @@
 # Brainrot.lua 
-  local Players = game:GetService("Players")
+   local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local Http = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlaceID = game.PlaceId
 
--- 🔥 DANH SÁCH PET (giữ nguyên)
-local PET_LIST = {
-    "garama and madundung",
-    "tictac sahur",
-    "lavadorito spinito",
-    "la secret combinasion",
-    "ketchuru and musturu",
-    "spaghetti tualetti",
-    "eviledon",
-    "spooky and pumpky",
-    "bacuru and egguru",
-    "cooki and milki",
-    "ketupat kepat",
-    "griffin",
-    "hydra",
-    "dragon",
-    "skibidi"
-}
+-- PET TARGET
+local TARGET_PET = "garama"
 
--- 🔥 THÊM: DATA m/s (KHÔNG ĐỤNG CODE CŨ)
-local PET_M = {
-    ["garama and madundung"] = 50,
-    ["tictac sahur"] = 37.5,
-    ["lavadorito spinito"] = 60,
-    ["la secret combinasion"] = 125,
-    ["ketchuru and musturu"] = 42.5,
-    ["spaghetti tualetti"] = 60,
-    ["eviledon"] = 300,
-    ["spooky and pumpky"] = 45,
-    ["bacuru and egguru"] = 55,
-    ["cooki and milki"] = 35,
-    ["ketupat kepat"] = 40,
-    ["griffin"] = 400,
-    ["hydra"] = 300,
-    ["dragon"] = 300,
-    ["skibidi"] = 330
-}
-
--- UI (giữ nguyên)
+-- UI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,260,0,140)
+frame.Size = UDim2.new(0,280,0,160)
 frame.Position = UDim2.new(0.35,0,0.4,0)
-frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.BackgroundColor3 = Color3.fromRGB(15,15,25)
 frame.Active = true
 frame.Draggable = true
 
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
+
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Color3.fromRGB(0,255,150)
+
+-- title
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,30)
+title.Text = "🔥 SERVER HUNTER"
+title.TextColor3 = Color3.fromRGB(0,255,150)
+title.BackgroundTransparency = 1
+
+-- status
 local status = Instance.new("TextLabel", frame)
 status.Size = UDim2.new(1,0,0,40)
+status.Position = UDim2.new(0,0,0,30)
 status.Text = "Sẵn sàng"
 status.TextColor3 = Color3.new(1,1,1)
 status.BackgroundTransparency = 1
 
--- 🔊 THÊM: SOUND
+-- button
+local btn = Instance.new("TextButton", frame)
+btn.Size = UDim2.new(1,-20,0,40)
+btn.Position = UDim2.new(0,10,0,90)
+btn.Text = "🔁 TÌM GARAMA"
+btn.BackgroundColor3 = Color3.fromRGB(50,200,120)
+btn.TextColor3 = Color3.new(1,1,1)
+
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+
+-- sound
 local sound = Instance.new("Sound", game.Workspace)
 sound.SoundId = "rbxassetid://9118823104"
 sound.Volume = 3
 
--- BUTTON (giữ nguyên)
-local rollBtn = Instance.new("TextButton", frame)
-rollBtn.Size = UDim2.new(1,-10,0,40)
-rollBtn.Position = UDim2.new(0,5,0,50)
-rollBtn.Text = "🔁 ROLL SERVER"
-rollBtn.BackgroundColor3 = Color3.fromRGB(50,150,255)
-
--- 🔥 SỬA: check pet (THÊM lọc ≥50m)
+-- check pet
 local function HasPet()
     for _,plr in pairs(Players:GetPlayers()) do
         for _,v in pairs(plr:GetDescendants()) do
-            local name = string.lower(v.Name)
-
-            for _,pet in pairs(PET_LIST) do
-                if string.find(name, pet) then
-                    local m = PET_M[pet]
-
-                    -- 🎯 chỉ lấy ≥50m
-                    if m and m >= 50 then
-                        return true, plr.Name, pet, m
-                    end
-                end
+            if string.find(string.lower(v.Name), TARGET_PET) then
+                return true, plr.Name
             end
         end
     end
     return false
 end
 
--- hop server (giữ nguyên)
+-- hop
 local function ServerHop()
-    local success, req = pcall(function()
-        return Http:JSONDecode(game:HttpGet(
-            "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
-        ))
-    end)
-
-    if not success or not req or not req.data then
-        status.Text = "❌ Lỗi lấy server → bấm lại"
-        return
-    end
+    local req = Http:JSONDecode(game:HttpGet(
+        "https://games.roblox.com/v1/games/"..PlaceID.."/servers/Public?sortOrder=Asc&limit=100"
+    ))
 
     for _,v in pairs(req.data) do
         if v.playing < v.maxPlayers then
-            status.Text = "🔁 Đang chuyển server..."
             TeleportService:TeleportToPlaceInstance(PlaceID, v.id)
             return
         end
     end
-
-    status.Text = "⚠️ Server full → bấm lại"
 end
 
--- CLICK (chỉ thêm sound + hiển thị m)
-rollBtn.MouseButton1Click:Connect(function()
-    status.Text = "🔍 Đang check..."
+-- click
+btn.MouseButton1Click:Connect(function()
+    status.Text = "🔍 Đang tìm "..TARGET_PET.."..."
 
-    local ok, name, pet, m = HasPet()
+    local ok, name = HasPet()
 
     if ok then
-        status.Text = "🔥 Có pet: "..pet.." ("..m.."m) - "..name
-
-        -- 🔊 âm thanh
-        for i = 1,2 do
-            sound:Play()
-            task.wait(0.2)
-        end
+        status.Text = "🔥 FOUND: "..name
+        sound:Play()
     else
         status.Text = "❌ Không có → chuyển..."
         task.wait(0.5)
