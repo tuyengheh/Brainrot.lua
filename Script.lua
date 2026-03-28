@@ -1,5 +1,5 @@
 # Brainrot.lua 
--       --// SERVICES
+-         --// SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
@@ -72,45 +72,51 @@ end
 local vipBtn = createBtn("Tìm Server VIP 🔥", 50)
 
 --------------------------------------------------
--- 🔥 VIP SERVER FINDER
+-- 🔥 VIP SERVER (FIX KHÔNG TREO)
 local searching = false
 
 local function findVIPServer()
     local placeId = game.PlaceId
 
-    while searching do
-        local success, result = pcall(function()
-            return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
-        end)
+    local success, result = pcall(function()
+        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
+    end)
 
-        if success then
-            local data = HttpService:JSONDecode(result)
+    if success then
+        local data = HttpService:JSONDecode(result)
 
-            for _,v in pairs(data.data) do
-                -- 🎯 server xịn: gần full + còn slot
-                if v.playing >= (v.maxPlayers - 2) and v.playing < v.maxPlayers then
-                    print("🔥 VIP SERVER:", v.playing.."/"..v.maxPlayers)
+        local fallbackServer = nil
 
-                    TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
-                    return
-                end
+        for _,v in pairs(data.data) do
+            -- 🎯 ưu tiên gần full
+            if v.playing >= (v.maxPlayers - 2) and v.playing < v.maxPlayers then
+                print("🔥 VIP SERVER:", v.playing.."/"..v.maxPlayers)
+                TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
+                return
+            end
+
+            -- lưu server dự phòng
+            if not fallbackServer then
+                fallbackServer = v
             end
         end
 
-        print("🔍 Đang tìm server VIP...")
-        task.wait(2)
+        -- ⚠️ không có server đẹp → vẫn vào
+        if fallbackServer then
+            print("⚠️ Không có VIP → vào server:", fallbackServer.playing.."/"..fallbackServer.maxPlayers)
+            TeleportService:TeleportToPlaceInstance(placeId, fallbackServer.id, player)
+            return
+        end
     end
+
+    -- ❌ fallback cuối
+    print("❌ Lỗi → vào random")
+    TeleportService:Teleport(placeId, player)
 end
 
 --------------------------------------------------
 -- BUTTON CLICK
 vipBtn.MouseButton1Click:Connect(function()
-    searching = not searching
-
-    if searching then
-        vipBtn.Text = "Đang tìm... 🔍"
-        findVIPServer()
-    else
-        vipBtn.Text = "Tìm Server VIP 🔥"
-    end
+    vipBtn.Text = "Đang tìm... 🔍"
+    findVIPServer()
 end)
