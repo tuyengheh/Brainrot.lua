@@ -3,6 +3,7 @@ local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local currentServerId = game.JobId
@@ -10,13 +11,11 @@ local currentServerId = game.JobId
 --------------------------------------------------
 -- 🎯 LIST PET HIẾM
 local rareList = {
-    "Garama and Madundung","Ketchuru and Musturu",
+    "Garama and Madundung","Ketchuru and Musturu","La Secret Combinasion",
     "Lavadorito Spinito","Tang Tang Keletang","Tictac Sahur",
     "Spaghetti Tualetti","Eviledon","Los Spaghettis",
-    "Spooky and Pumpky","La Grande Combinasion","Strawberry Elephant",
+    "Spooky and Pumpky","Strawberry Elephant",
     "Meowl","Skibidi Toilet","Cigno Fulgoro",
-
-    -- 🔥 mới thêm
     "Lava","Rainbow","Galaxy"
 }
 
@@ -31,23 +30,54 @@ local function isRare(name)
 end
 
 --------------------------------------------------
--- ❌ KHÔNG SCAN BASE CỦA MÌNH
+-- ❌ KHÔNG SCAN BASE
 local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
-    if owner and owner.Value == player then
-        return true
-    end
-    return false
+    return owner and owner.Value == player
 end
 
 --------------------------------------------------
--- 🌈 GUI
+-- 🎨 GUI
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 280, 0, 200)
+frame.Size = UDim2.new(0, 280, 0, 230)
 frame.Position = UDim2.new(0.5, -140, 0.3, 0)
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
+
+-- 🖐️ DRAG GUI
+local dragging, dragStart, startPos
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- 🌈 Rainbow
+RunService.RenderStepped:Connect(function()
+    frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
+end)
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
@@ -56,11 +86,6 @@ title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
 title.TextScaled = true
-
--- 🌈 rainbow
-RunService.RenderStepped:Connect(function()
-    frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
-end)
 
 local log = Instance.new("TextLabel", frame)
 log.Size = UDim2.new(1,0,0,80)
@@ -84,22 +109,21 @@ local function createBtn(text,y)
 end
 
 local startBtn = createBtn("START AUTO 🔥", 120)
-local hopBtn = createBtn("HOP SERVER NEW 🔁", 160)
+local hopBtn = createBtn("HOP SERVER 🔁", 160)
+local baseBtn = createBtn("🏠 Bay về Base", 200)
 
 --------------------------------------------------
--- 🧲 AUTO NHẶT PET
+-- 🧲 BAY TỚI PET
 local function moveToPet(obj)
     local char = player.Character
     if not char then return end
 
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
     local part = obj:FindFirstChildWhichIsA("BasePart")
-    if not part then return end
 
-    -- bay tới
-    hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+    if hrp and part then
+        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+    end
 end
 
 --------------------------------------------------
@@ -116,7 +140,7 @@ local function scan()
 end
 
 --------------------------------------------------
--- 🔁 HOP SERVER NEW
+-- 🔁 HOP
 local function hopServer()
     local placeId = game.PlaceId
 
@@ -141,7 +165,40 @@ end
 hopBtn.MouseButton1Click:Connect(hopServer)
 
 --------------------------------------------------
--- 🔁 AUTO LOOP
+-- 🏠 TÌM BASE
+local function findMyBase()
+    for _,obj in pairs(workspace:GetDescendants()) do
+        local owner = obj:FindFirstChild("Owner")
+        if owner and owner.Value == player then
+            local part = obj:FindFirstChildWhichIsA("BasePart")
+            if part then return part.Position end
+        end
+    end
+end
+
+-- 🚀 BAY VỀ BASE
+local function flyTo(pos)
+    local char = player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    for i=1,20 do
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(pos + Vector3.new(0,5,0)),0.2)
+        task.wait(0.05)
+    end
+end
+
+baseBtn.MouseButton1Click:Connect(function()
+    local pos = findMyBase()
+    if pos then
+        flyTo(pos)
+    end
+end)
+
+--------------------------------------------------
+-- 🔁 AUTO
 local running = false
 
 startBtn.MouseButton1Click:Connect(function()
@@ -156,11 +213,8 @@ startBtn.MouseButton1Click:Connect(function()
             local found, obj = scan()
 
             if found then
-                log.Text = "🔥 FOUND: "..obj.Name
-
-                -- 🧲 bay tới nhặt
+                log.Text = "🔥 "..obj.Name
                 moveToPet(obj)
-
                 running = false
                 startBtn.Text = "FOUND!"
             else
