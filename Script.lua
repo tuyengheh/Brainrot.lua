@@ -1,11 +1,12 @@
 # Brainrot.lua 
--       -- 🔥
+-        repeat task.wait() until game:IsLoaded()
+
 --// SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 local currentServerId = game.JobId
@@ -30,7 +31,7 @@ local function isRare(name)
 end
 
 --------------------------------------------------
--- ❌ BASE CHECK
+-- ❌ BỎ BASE CỦA MÌNH
 local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
     return owner and owner.Value == player
@@ -39,17 +40,16 @@ end
 --------------------------------------------------
 -- 🎨 GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "RAINBOW_GUI"
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 280, 0, 230)
-frame.Position = UDim2.new(0.5, -140, 0.3, 0)
+frame.Size = UDim2.new(0, 260, 0, 200)
+frame.Position = UDim2.new(0.5, -130, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
+Instance.new("UICorner", frame)
 
--- 🖐️ DRAG (mobile)
+-- DRAG MOBILE
 local dragging, dragInput, dragStart, startPos
 
 frame.InputBegan:Connect(function(input)
@@ -79,14 +79,14 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- ⌨️ TOGGLE GUI (K)
-UIS.InputBegan:Connect(function(input, gp)
-    if not gp and input.KeyCode == Enum.KeyCode.K then
+-- ⌨️ PHÍM K
+UIS.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.K then
         gui.Enabled = not gui.Enabled
     end
 end)
 
--- 🌈 COLOR
+-- 🌈 MÀU
 RunService.RenderStepped:Connect(function()
     frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
 end)
@@ -94,13 +94,13 @@ end)
 -- TEXT
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "RAINBOW AUTO 🌈"
+title.Text = "RAINBOW FARM 🌈"
 title.BackgroundTransparency = 1
-title.TextColor3 = Color3.new(1,1,1)
 title.TextScaled = true
+title.TextColor3 = Color3.new(1,1,1)
 
 local log = Instance.new("TextLabel", frame)
-log.Size = UDim2.new(1,0,0,70)
+log.Size = UDim2.new(1,0,0,60)
 log.Position = UDim2.new(0,0,0,30)
 log.BackgroundTransparency = 1
 log.Text = "Ready..."
@@ -108,23 +108,23 @@ log.TextScaled = true
 log.TextColor3 = Color3.new(1,1,1)
 
 -- BUTTON
-local function btn(text,y)
+local function btn(txt,y)
     local b = Instance.new("TextButton", frame)
     b.Size = UDim2.new(0.8,0,0,35)
     b.Position = UDim2.new(0.1,0,0,y)
-    b.Text = text
+    b.Text = txt
     b.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    b.TextColor3 = Color3.new(1,1,1)
     b.TextScaled = true
+    b.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", b)
     return b
 end
 
-local startBtn = btn("START AUTO",110)
-local hopBtn   = btn("HOP SERVER",155)
+local startBtn = btn("START AUTO",100)
+local hopBtn   = btn("HOP SERVER",145)
 
 --------------------------------------------------
--- 🏠 BASE
+-- 🏠 TÌM BASE
 local function findBase()
     for _,v in pairs(workspace:GetDescendants()) do
         local owner = v:FindFirstChild("Owner")
@@ -175,7 +175,7 @@ local function scan()
 end
 
 --------------------------------------------------
--- 🔁 HOP
+-- 🔁 HOP SERVER
 local function hop()
     local placeId = game.PlaceId
 
@@ -202,7 +202,7 @@ hopBtn.MouseButton1Click:Connect(hop)
 --------------------------------------------------
 -- 🔁 AUTO
 startBtn.MouseButton1Click:Connect(function()
-    startBtn.Text = "RUNNING"
+    log.Text = "Đang scan..."
 
     task.spawn(function()
         task.wait(1)
@@ -212,17 +212,9 @@ startBtn.MouseButton1Click:Connect(function()
         if pet then
             log.Text = "🔥 "..pet.Name
             takePet(pet)
-            startBtn.Text = "FOUND"
         else
-            log.Text = "❌ Hop..."
+            log.Text = "❌ Không có → hop"
             hop()
         end
     end)
-end)
-
---------------------------------------------------
--- 🔥 AUTO EXECUTE SAU HOP
-task.spawn(function()
-    repeat task.wait() until game:IsLoaded()
-    loadstring(game:HttpGet(AUTO_URL))()
 end)
