@@ -1,14 +1,13 @@
--- GUI LOAD FIRST (KHÔNG BAO GIỜ FAIL)
+-- GUI LOAD FIRST
 local player = game.Players.LocalPlayer
 local pg = player:WaitForChild("PlayerGui")
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "AUTO_GUI"
 gui.Parent = pg
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,260,0,200)
-frame.Position = UDim2.new(0.5,-130,0.4,-100)
+frame.Size = UDim2.new(0,260,0,230)
+frame.Position = UDim2.new(0.5,-130,0.4,-115)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 Instance.new("UICorner",frame)
@@ -61,8 +60,9 @@ local function btn(txt,y)
     return b
 end
 
-local tpBtn = btn("TP BASE ⚡",90)
-local hopBtn = btn("HOP SERVER 🔁",140)
+local tpBtn   = btn("TP BASE ⚡",90)
+local scanBtn = btn("SCAN PET 🔍",135)
+local hopBtn  = btn("HOP SERVER 🔁",180)
 
 --------------------------------------------------
 -- DRAG
@@ -106,7 +106,7 @@ local function findBase()
 end
 
 --------------------------------------------------
--- ⚡ TP BASE
+-- ⚡ TP BASE (FIX MẠNH)
 local function tpBase()
     pcall(function()
         log.Text = "TP BASE..."
@@ -123,8 +123,7 @@ local function tpBase()
             return
         end
 
-        hrp.CFrame = hrp.CFrame + Vector3.new(0,5,0)
-        task.wait(0.1)
+        -- tp trực tiếp (bỏ anti lỗi)
         hrp.CFrame = CFrame.new(base + Vector3.new(0,3,0))
 
         log.Text = "DONE ✅"
@@ -132,22 +131,46 @@ local function tpBase()
 end
 
 --------------------------------------------------
--- 🤖 AUTO CẦM PET
-task.spawn(function()
-    while true do
-        task.wait(0.5)
+-- 🧲 BAY TỚI PET
+local function flyToPet(obj)
+    local char = player.Character
+    if not char then return end
 
-        local char = player.Character
-        if not char then continue end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local part = obj:FindFirstChildWhichIsA("BasePart")
 
-        for _,tool in pairs(char:GetChildren()) do
-            if tool:IsA("Tool") and isRare(tool.Name) then
-                log.Text = "📦 "..tool.Name
-                tpBase()
-                task.wait(2)
+    if hrp and part then
+        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+    end
+end
+
+--------------------------------------------------
+-- 🔍 SCAN PET
+local function scanPet()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") then
+            if isRare(v.Name) then
+                return v
             end
         end
     end
+end
+
+scanBtn.MouseButton1Click:Connect(function()
+    log.Text = "SCANNING..."
+
+    task.spawn(function()
+        task.wait(0.5)
+
+        local pet = scanPet()
+
+        if pet then
+            log.Text = "🔥 "..pet.Name
+            flyToPet(pet)
+        else
+            log.Text = "❌ KHÔNG CÓ"
+        end
+    end)
 end)
 
 --------------------------------------------------
@@ -182,4 +205,4 @@ end
 tpBtn.MouseButton1Click:Connect(tpBase)
 hopBtn.MouseButton1Click:Connect(hop)
 
-log.Text = "LOADED FULL ✅"
+log.Text = "READY ✅"
