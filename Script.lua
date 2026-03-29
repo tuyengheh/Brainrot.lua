@@ -31,7 +31,7 @@ local function isRare(name)
 end
 
 --------------------------------------------------
--- ❌ BỎ BASE CỦA MÌNH
+-- ❌ BASE CHECK
 local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
     return owner and owner.Value == player
@@ -39,17 +39,16 @@ end
 
 --------------------------------------------------
 -- 🎨 GUI
-local gui = Instance.new("ScreenGui")
-gui.Parent = player:WaitForChild("PlayerGui")
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 260, 0, 200)
+frame.Size = UDim2.new(0, 260, 0, 210)
 frame.Position = UDim2.new(0.5, -130, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 Instance.new("UICorner", frame)
 
--- DRAG MOBILE
+-- DRAG
 local dragging, dragInput, dragStart, startPos
 
 frame.InputBegan:Connect(function(input)
@@ -94,7 +93,7 @@ end)
 -- TEXT
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "RAINBOW FARM 🌈"
+title.Text = "RAINBOW AUTO 🌈"
 title.BackgroundTransparency = 1
 title.TextScaled = true
 title.TextColor3 = Color3.new(1,1,1)
@@ -124,7 +123,7 @@ local startBtn = btn("START AUTO",100)
 local hopBtn   = btn("HOP SERVER",145)
 
 --------------------------------------------------
--- 🏠 TÌM BASE
+-- 🏠 FIND BASE
 local function findBase()
     for _,v in pairs(workspace:GetDescendants()) do
         local owner = v:FindFirstChild("Owner")
@@ -135,32 +134,56 @@ local function findBase()
     end
 end
 
-local function fly(pos)
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+--------------------------------------------------
+-- ✈️ BAY ANTI
+local function flySafeToBase()
+    local char = player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
+    local base = findBase()
+    if not base then return end
+
+    -- bay lên cao
+    local high = hrp.Position + Vector3.new(0, 40, 0)
+
     for i=1,15 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(pos + Vector3.new(0,5,0)),0.3)
-        task.wait(0.05)
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(high),0.25)
+        task.wait(0.03)
+    end
+
+    task.wait(0.2)
+
+    -- bay về base
+    for i=1,25 do
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(base + Vector3.new(0,5,0)),0.2)
+        task.wait(0.03)
     end
 end
 
 --------------------------------------------------
--- 🧲 NHẶT + VỀ BASE
-local function takePet(obj)
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    local part = obj:FindFirstChildWhichIsA("BasePart")
+-- 🧠 AUTO DETECT ĐANG CẦM PET
+task.spawn(function()
+    while true do
+        task.wait(0.5)
 
-    if hrp and part then
-        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
-        task.wait(1)
+        local char = player.Character
+        if not char then continue end
 
-        local base = findBase()
-        if base then
-            fly(base)
+        for _,tool in pairs(char:GetChildren()) do
+            if tool:IsA("Tool") then
+                -- phát hiện đang cầm pet
+                if isRare(tool.Name) then
+                    log.Text = "📦 Đang cầm: "..tool.Name
+                    flySafeToBase()
+                    task.wait(2)
+                end
+            end
         end
     end
-end
+end)
 
 --------------------------------------------------
 -- 🔍 SCAN
@@ -175,7 +198,18 @@ local function scan()
 end
 
 --------------------------------------------------
--- 🔁 HOP SERVER
+-- 🧲 NHẶT
+local function takePet(obj)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    local part = obj:FindFirstChildWhichIsA("BasePart")
+
+    if hrp and part then
+        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+    end
+end
+
+--------------------------------------------------
+-- 🔁 HOP
 local function hop()
     local placeId = game.PlaceId
 
