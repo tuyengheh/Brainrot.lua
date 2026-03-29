@@ -1,3 +1,11 @@
+-- 🔥 AUTO EXECUTE LINK
+local AUTO_URL = "loadstring(game:HttpGet("https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua"))()
+
+-- 🔥 XÓA GUI CŨ
+pcall(function()
+    game.Players.LocalPlayer.PlayerGui:FindFirstChild("RAINBOW_GUI"):Destroy()
+end)
+
 --// SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
@@ -9,7 +17,7 @@ local player = Players.LocalPlayer
 local currentServerId = game.JobId
 
 --------------------------------------------------
--- 🎯 LIST PET HIẾM
+-- 🎯 LIST PET
 local rareList = {
     "Garama and Madundung","Ketchuru and Musturu","La Secret Combinasion",
     "Lavadorito Spinito","Tang Tang Keletang","Tictac Sahur",
@@ -30,7 +38,7 @@ local function isRare(name)
 end
 
 --------------------------------------------------
--- ❌ KHÔNG SCAN BASE
+-- ❌ BASE CHECK
 local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
     return owner and owner.Value == player
@@ -38,7 +46,9 @@ end
 
 --------------------------------------------------
 -- 🎨 GUI
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local gui = Instance.new("ScreenGui")
+gui.Name = "RAINBOW_GUI"
+gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 280, 0, 240)
@@ -84,28 +94,27 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- ⌨️ TOGGLE GUI (phím K)
+-- ⌨️ TOGGLE GUI
 UIS.InputBegan:Connect(function(input, gp)
     if not gp and input.KeyCode == Enum.KeyCode.K then
         gui.Enabled = not gui.Enabled
     end
 end)
 
--- 🌈 Rainbow
+-- 🌈 COLOR
 RunService.RenderStepped:Connect(function()
     frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
 end)
 
--- TITLE
+-- TEXT
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "RAINBOW FARM 🌈"
+title.Text = "RAINBOW AUTO 🌈"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
 title.TextScaled = true
 
--- LOG
 local log = Instance.new("TextLabel", frame)
 log.Size = UDim2.new(1,0,0,80)
 log.Position = UDim2.new(0,0,0,30)
@@ -129,10 +138,10 @@ local function createBtn(text,y)
 end
 
 local startBtn = createBtn("START AUTO 🔥", 120)
-local hopBtn   = createBtn("HOP SERVER NEW 🔁", 170)
+local hopBtn   = createBtn("HOP SERVER 🔁", 170)
 
 --------------------------------------------------
--- 🧠 TÌM BASE
+-- 🏠 BASE
 local function findMyBase()
     for _,obj in pairs(workspace:GetDescendants()) do
         local owner = obj:FindFirstChild("Owner")
@@ -143,7 +152,6 @@ local function findMyBase()
     end
 end
 
--- 🚀 BAY MƯỢT
 local function flyTo(pos)
     local char = player.Character
     if not char then return end
@@ -158,7 +166,7 @@ local function flyTo(pos)
 end
 
 --------------------------------------------------
--- 🧲 NHẶT + VỀ BASE
+-- 🧲 MOVE + RETURN
 local function moveToPet(obj)
     local char = player.Character
     if not char then return end
@@ -168,11 +176,8 @@ local function moveToPet(obj)
 
     if hrp and part then
         hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
-
-        -- đợi nhặt
         task.wait(1)
 
-        -- bay về base
         local base = findMyBase()
         if base then
             flyTo(base)
@@ -194,7 +199,7 @@ local function scan()
 end
 
 --------------------------------------------------
--- 🔁 HOP
+-- 🔁 HOP + AUTO EXECUTE
 local function hopServer()
     local placeId = game.PlaceId
 
@@ -219,7 +224,7 @@ end
 hopBtn.MouseButton1Click:Connect(hopServer)
 
 --------------------------------------------------
--- 🔁 AUTO
+-- 🔁 AUTO LOOP
 local running = false
 
 startBtn.MouseButton1Click:Connect(function()
@@ -246,5 +251,14 @@ startBtn.MouseButton1Click:Connect(function()
         end)
     else
         startBtn.Text = "START AUTO 🔥"
+    end
+end)
+
+--------------------------------------------------
+-- 🔥 AUTO EXECUTE SAU KHI HOP
+task.spawn(function()
+    if AUTO_URL ~= "PASTE_LINK_HERE" then
+        repeat task.wait() until game:IsLoaded()
+        loadstring(game:HttpGet(AUTO_URL))()
     end
 end)
