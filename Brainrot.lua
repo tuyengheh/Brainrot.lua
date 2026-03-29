@@ -1,5 +1,5 @@
--- 🔥 AUTO EXECUTE LINK
-local AUTO_URL = "loadstring(game:HttpGet("https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua"))()
+-- 🔥 AUTO LINK (bạn thay nếu muốn auto vĩnh viễn)
+local AUTO_URL = "https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua"
 
 -- 🔥 XÓA GUI CŨ
 pcall(function()
@@ -19,12 +19,10 @@ local currentServerId = game.JobId
 --------------------------------------------------
 -- 🎯 LIST PET
 local rareList = {
-    "Garama and Madundung","Ketchuru and Musturu","La Secret Combinasion",
-    "Lavadorito Spinito","Tang Tang Keletang","Tictac Sahur",
-    "Spaghetti Tualetti","Eviledon","Los Spaghettis",
-    "Spooky and Pumpky","La Grande Combinasion","Strawberry Elephant",
-    "Meowl","Skibidi Toilet","Cigno Fulgoro",
-    "Lava","Rainbow","Galaxy"
+    "Garama","Ketchuru","Combinasion","Lavadorito",
+    "Tang","Tictac","Spaghetti","Eviledon",
+    "Spooky","Strawberry","Meowl","Skibidi",
+    "Cigno","Lava","Rainbow","Galaxy"
 }
 
 local function isRare(name)
@@ -51,27 +49,20 @@ gui.Name = "RAINBOW_GUI"
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 280, 0, 240)
+frame.Size = UDim2.new(0, 280, 0, 230)
 frame.Position = UDim2.new(0.5, -140, 0.3, 0)
-frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
--- 🖐️ DRAG
-local dragging = false
-local dragInput, dragStart, startPos
+-- 🖐️ DRAG (FIX CHUẨN)
+local dragging, dragInput, dragStart, startPos
 
 frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
-        dragInput = input
-    end
-end)
-
-frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
@@ -94,7 +85,7 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- ⌨️ TOGGLE GUI
+-- ⌨️ TOGGLE GUI (K)
 UIS.InputBegan:Connect(function(input, gp)
     if not gp and input.KeyCode == Enum.KeyCode.K then
         gui.Enabled = not gui.Enabled
@@ -112,75 +103,67 @@ title.Size = UDim2.new(1,0,0,30)
 title.Text = "RAINBOW AUTO 🌈"
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.new(1,1,1)
-title.Font = Enum.Font.GothamBold
 title.TextScaled = true
 
 local log = Instance.new("TextLabel", frame)
-log.Size = UDim2.new(1,0,0,80)
+log.Size = UDim2.new(1,0,0,70)
 log.Position = UDim2.new(0,0,0,30)
 log.BackgroundTransparency = 1
 log.Text = "Ready..."
-log.TextColor3 = Color3.new(1,1,1)
 log.TextScaled = true
+log.TextColor3 = Color3.new(1,1,1)
 
 -- BUTTON
-local function createBtn(text,y)
+local function btn(text,y)
     local b = Instance.new("TextButton", frame)
     b.Size = UDim2.new(0.8,0,0,35)
     b.Position = UDim2.new(0.1,0,0,y)
     b.Text = text
     b.BackgroundColor3 = Color3.fromRGB(0,0,0)
     b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.GothamBold
     b.TextScaled = true
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", b)
     return b
 end
 
-local startBtn = createBtn("START AUTO 🔥", 120)
-local hopBtn   = createBtn("HOP SERVER 🔁", 170)
+local startBtn = btn("START AUTO",110)
+local hopBtn   = btn("HOP SERVER",155)
 
 --------------------------------------------------
 -- 🏠 BASE
-local function findMyBase()
-    for _,obj in pairs(workspace:GetDescendants()) do
-        local owner = obj:FindFirstChild("Owner")
+local function findBase()
+    for _,v in pairs(workspace:GetDescendants()) do
+        local owner = v:FindFirstChild("Owner")
         if owner and owner.Value == player then
-            local part = obj:FindFirstChildWhichIsA("BasePart")
-            if part then return part.Position end
+            local p = v:FindFirstChildWhichIsA("BasePart")
+            if p then return p.Position end
         end
     end
 end
 
-local function flyTo(pos)
-    local char = player.Character
-    if not char then return end
-
-    local hrp = char:FindFirstChild("HumanoidRootPart")
+local function fly(pos)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    for i=1,20 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(pos + Vector3.new(0,5,0)),0.2)
+    for i=1,15 do
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(pos + Vector3.new(0,5,0)),0.3)
         task.wait(0.05)
     end
 end
 
 --------------------------------------------------
 -- 🧲 MOVE + RETURN
-local function moveToPet(obj)
-    local char = player.Character
-    if not char then return end
-
-    local hrp = char:FindFirstChild("HumanoidRootPart")
+local function takePet(obj)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     local part = obj:FindFirstChildWhichIsA("BasePart")
 
     if hrp and part then
         hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
         task.wait(1)
 
-        local base = findMyBase()
+        local base = findBase()
         if base then
-            flyTo(base)
+            fly(base)
         end
     end
 end
@@ -191,74 +174,73 @@ local function scan()
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and not isMyBase(v) then
             if isRare(v.Name) then
-                return true, v
+                return v
             end
         end
     end
-    return false, nil
 end
 
 --------------------------------------------------
--- 🔁 HOP + AUTO EXECUTE
-local function hopServer()
+-- 🔁 HOP (FIX KHÔNG REJOIN)
+local function hop()
     local placeId = game.PlaceId
 
-    local success, result = pcall(function()
+    local s,res = pcall(function()
         return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=50")
     end)
 
-    if success then
-        local data = HttpService:JSONDecode(result)
+    if s then
+        local data = HttpService:JSONDecode(res)
 
         for _,v in pairs(data.data) do
             if v.id ~= currentServerId and v.playing < v.maxPlayers then
-                TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
+                TeleportService:TeleportToPlaceInstance(placeId,v.id,player)
                 return
             end
         end
     end
 
-    TeleportService:Teleport(placeId, player)
+    TeleportService:Teleport(placeId)
 end
 
-hopBtn.MouseButton1Click:Connect(hopServer)
+hopBtn.MouseButton1Click:Connect(hop)
 
 --------------------------------------------------
--- 🔁 AUTO LOOP
+-- 🔁 AUTO
 local running = false
 
 startBtn.MouseButton1Click:Connect(function()
     running = not running
 
     if running then
-        startBtn.Text = "RUNNING..."
+        startBtn.Text = "RUNNING"
 
         task.spawn(function()
-            task.wait(1.5)
+            task.wait(1)
 
-            local found, obj = scan()
+            local pet = scan()
 
-            if found then
-                log.Text = "🔥 "..obj.Name
-                moveToPet(obj)
+            if pet then
+                log.Text = "🔥 "..pet.Name
+                takePet(pet)
+                startBtn.Text = "FOUND"
                 running = false
-                startBtn.Text = "FOUND!"
             else
-                log.Text = "❌ Không có → hop"
-                task.wait(0.5)
-                hopServer()
+                log.Text = "❌ Hop..."
+                hop()
             end
         end)
     else
-        startBtn.Text = "START AUTO 🔥"
+        startBtn.Text = "START AUTO"
     end
 end)
 
 --------------------------------------------------
--- 🔥 AUTO EXECUTE SAU KHI HOP
+-- 🔥 AUTO EXECUTE SAU HOP (QUAN TRỌNG)
 task.spawn(function()
-    if AUTO_URL ~= "PASTE_LINK_HERE" then
-        repeat task.wait() until game:IsLoaded()
+    repeat task.wait() until game:IsLoaded()
+
+    if AUTO_URL then
         loadstring(game:HttpGet(AUTO_URL))()
     end
 end)
