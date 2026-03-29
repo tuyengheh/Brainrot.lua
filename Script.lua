@@ -1,7 +1,5 @@
 # Brainrot.lua 
--       -- 🔥 LINK AUTO EXECUTE (bạn có thể giữ nguyên)
-local AUTO_URL = "https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua"
-
+-       -- 🔥
 --// SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
