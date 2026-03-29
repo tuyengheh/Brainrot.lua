@@ -1,5 +1,5 @@
 # Brainrot.lua 
--          --// SERVICES
+-       --// SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
@@ -42,7 +42,7 @@ end
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 280, 0, 280)
+frame.Size = UDim2.new(0, 280, 0, 240)
 frame.Position = UDim2.new(0.5, -140, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 frame.Active = true
@@ -85,6 +85,13 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
+-- ⌨️ TOGGLE GUI (phím K)
+UIS.InputBegan:Connect(function(input, gp)
+    if not gp and input.KeyCode == Enum.KeyCode.K then
+        gui.Enabled = not gui.Enabled
+    end
+end)
+
 -- 🌈 Rainbow
 RunService.RenderStepped:Connect(function()
     frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
@@ -123,63 +130,10 @@ local function createBtn(text,y)
 end
 
 local startBtn = createBtn("START AUTO 🔥", 120)
-local hopBtn   = createBtn("HOP SERVER NEW 🔁", 165)
-local baseBtn  = createBtn("🏠 BAY VỀ BASE", 210)
+local hopBtn   = createBtn("HOP SERVER NEW 🔁", 170)
 
 --------------------------------------------------
--- 🧲 BAY TỚI PET
-local function moveToPet(obj)
-    local char = player.Character
-    if not char then return end
-
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local part = obj:FindFirstChildWhichIsA("BasePart")
-
-    if hrp and part then
-        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
-    end
-end
-
---------------------------------------------------
--- 🔍 SCAN
-local function scan()
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and not isMyBase(v) then
-            if isRare(v.Name) then
-                return true, v
-            end
-        end
-    end
-    return false, nil
-end
-
---------------------------------------------------
--- 🔁 HOP SERVER
-local function hopServer()
-    local placeId = game.PlaceId
-
-    local success, result = pcall(function()
-        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=50")
-    end)
-
-    if success then
-        local data = HttpService:JSONDecode(result)
-
-        for _,v in pairs(data.data) do
-            if v.id ~= currentServerId and v.playing < v.maxPlayers then
-                TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
-                return
-            end
-        end
-    end
-
-    TeleportService:Teleport(placeId, player)
-end
-
-hopBtn.MouseButton1Click:Connect(hopServer)
-
---------------------------------------------------
--- 🏠 TÌM BASE
+-- 🧠 TÌM BASE
 local function findMyBase()
     for _,obj in pairs(workspace:GetDescendants()) do
         local owner = obj:FindFirstChild("Owner")
@@ -204,14 +158,66 @@ local function flyTo(pos)
     end
 end
 
-baseBtn.MouseButton1Click:Connect(function()
-    local pos = findMyBase()
-    if pos then
-        flyTo(pos)
-    else
-        warn("❌ Không tìm thấy base")
+--------------------------------------------------
+-- 🧲 NHẶT + VỀ BASE
+local function moveToPet(obj)
+    local char = player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local part = obj:FindFirstChildWhichIsA("BasePart")
+
+    if hrp and part then
+        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+
+        -- đợi nhặt
+        task.wait(1)
+
+        -- bay về base
+        local base = findMyBase()
+        if base then
+            flyTo(base)
+        end
     end
-end)
+end
+
+--------------------------------------------------
+-- 🔍 SCAN
+local function scan()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and not isMyBase(v) then
+            if isRare(v.Name) then
+                return true, v
+            end
+        end
+    end
+    return false, nil
+end
+
+--------------------------------------------------
+-- 🔁 HOP
+local function hopServer()
+    local placeId = game.PlaceId
+
+    local success, result = pcall(function()
+        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=50")
+    end)
+
+    if success then
+        local data = HttpService:JSONDecode(result)
+
+        for _,v in pairs(data.data) do
+            if v.id ~= currentServerId and v.playing < v.maxPlayers then
+                TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
+                return
+            end
+        end
+    end
+
+    TeleportService:Teleport(placeId, player)
+end
+
+hopBtn.MouseButton1Click:Connect(hopServer)
 
 --------------------------------------------------
 -- 🔁 AUTO
