@@ -6,8 +6,8 @@ local gui = Instance.new("ScreenGui")
 gui.Parent = pg
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,260,0,230)
-frame.Position = UDim2.new(0.5,-130,0.4,-115)
+frame.Size = UDim2.new(0,260,0,260)
+frame.Position = UDim2.new(0.5,-130,0.4,-130)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 Instance.new("UICorner",frame)
@@ -60,9 +60,9 @@ local function btn(txt,y)
     return b
 end
 
-local tpBtn   = btn("TP BASE ⚡",90)
-local scanBtn = btn("SCAN PET 🔍",135)
-local hopBtn  = btn("HOP SERVER 🔁",180)
+local tpBtn   = btn("TP BASE ⚡",80)
+local scanBtn = btn("SCAN PET 🔍",125)
+local hopBtn  = btn("HOP SERVER NEW 🆕",170)
 
 --------------------------------------------------
 -- DRAG
@@ -94,7 +94,7 @@ UIS.InputEnded:Connect(function()
 end)
 
 --------------------------------------------------
--- 🏠 FIND BASE
+-- 🏠 BASE
 local function findBase()
     for _,v in pairs(workspace:GetDescendants()) do
         local owner = v:FindFirstChild("Owner")
@@ -105,33 +105,23 @@ local function findBase()
     end
 end
 
---------------------------------------------------
--- ⚡ TP BASE (FIX MẠNH)
 local function tpBase()
-    pcall(function()
-        log.Text = "TP BASE..."
+    local char = player.Character
+    if not char then return end
 
-        local char = player.Character
-        if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local base = findBase()
 
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        local base = findBase()
-        if not base then
-            log.Text = "NO BASE"
-            return
-        end
-
-        -- tp trực tiếp (bỏ anti lỗi)
+    if hrp and base then
         hrp.CFrame = CFrame.new(base + Vector3.new(0,3,0))
-
-        log.Text = "DONE ✅"
-    end)
+        log.Text = "🏠 TP DONE"
+    else
+        log.Text = "❌ NO BASE"
+    end
 end
 
 --------------------------------------------------
--- 🧲 BAY TỚI PET
+-- 🧲 FLY PET
 local function flyToPet(obj)
     local char = player.Character
     if not char then return end
@@ -145,13 +135,11 @@ local function flyToPet(obj)
 end
 
 --------------------------------------------------
--- 🔍 SCAN PET
+-- 🔍 SCAN
 local function scanPet()
     for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") then
-            if isRare(v.Name) then
-                return v
-            end
+        if v:IsA("Model") and isRare(v.Name) then
+            return v
         end
     end
 end
@@ -174,35 +162,37 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- 🔁 HOP
+-- 🔥 HOP SERVER CỰC MỚI
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
-local currentServerId = game.JobId
-local visited = {}
 
-local function hop()
-    pcall(function()
-        log.Text = "HOP..."
+local function hopNew()
+    log.Text = "🔎 FIND NEW..."
 
-        local placeId = game.PlaceId
-        local res = game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=50")
+    local placeId = game.PlaceId
+    local s,res = pcall(function()
+        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
+    end)
+
+    if s then
         local data = HttpService:JSONDecode(res)
 
         for _,v in pairs(data.data) do
-            if v.id ~= currentServerId and not visited[v.id] then
-                visited[v.id] = true
+            if v.playing <= 2 then -- 🎯 server cực mới
+                log.Text = "🆕 "..v.playing.."/"..v.maxPlayers
                 TeleportService:TeleportToPlaceInstance(placeId,v.id,player)
                 return
             end
         end
+    end
 
-        TeleportService:Teleport(placeId)
-    end)
+    log.Text = "⚠️ KHÔNG TÌM THẤY → REJOIN"
+    TeleportService:Teleport(placeId)
 end
 
 --------------------------------------------------
 -- CONNECT
 tpBtn.MouseButton1Click:Connect(tpBase)
-hopBtn.MouseButton1Click:Connect(hop)
+hopBtn.MouseButton1Click:Connect(hopNew)
 
 log.Text = "READY ✅"
