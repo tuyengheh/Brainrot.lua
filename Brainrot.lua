@@ -32,7 +32,7 @@ log.TextColor3 = Color3.new(1,1,1)
 local rareList = {
     "Ketchuru","Lavadorito","Tang","Tictac","Spaghetti",
     "Eviledon","Spooky","Strawberry","Meowl","Skibidi",
-    "Cigno","Lava","Rainbow","Galaxy",
+    "Cigno","admin","Rainbow","Galaxy",
     "Tiger","Kitsune","Yeti","Fruits"
 }
 
