@@ -1,5 +1,5 @@
 # Brainrot.lua 
--         --// SERVICES
+-       --// SERVICES
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
@@ -15,7 +15,7 @@ local rareList = {
     "Garama and Madundung","Ketchuru and Musturu","La Secret Combinasion",
     "Lavadorito Spinito","Tang Tang Keletang","Tictac Sahur",
     "Spaghetti Tualetti","Eviledon","Los Spaghettis",
-    "Spooky and Pumpky","Strawberry Elephant",
+    "Spooky and Pumpky","La Grande Combinasion","Strawberry Elephant",
     "Meowl","Skibidi Toilet","Cigno Fulgoro",
     "Lava","Rainbow","Galaxy"
 }
@@ -42,29 +42,33 @@ end
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 280, 0, 230)
+frame.Size = UDim2.new(0, 280, 0, 280)
 frame.Position = UDim2.new(0.5, -140, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+frame.Active = true
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
--- 🖐️ DRAG GUI
-local dragging, dragStart, startPos
+-- 🖐️ DRAG
+local dragging = false
+local dragInput, dragStart, startPos
 
 frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
+        dragInput = input
+    end
+end)
 
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
     end
 end)
 
 UIS.InputChanged:Connect(function(input)
-    if dragging then
+    if input == dragInput and dragging then
         local delta = input.Position - dragStart
         frame.Position = UDim2.new(
             startPos.X.Scale,
@@ -75,11 +79,18 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
+UIS.InputEnded:Connect(function(input)
+    if input == dragInput then
+        dragging = false
+    end
+end)
+
 -- 🌈 Rainbow
 RunService.RenderStepped:Connect(function()
     frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
 end)
 
+-- TITLE
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
 title.Text = "RAINBOW FARM 🌈"
@@ -88,6 +99,7 @@ title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
 title.TextScaled = true
 
+-- LOG
 local log = Instance.new("TextLabel", frame)
 log.Size = UDim2.new(1,0,0,80)
 log.Position = UDim2.new(0,0,0,30)
@@ -96,6 +108,7 @@ log.Text = "Ready..."
 log.TextColor3 = Color3.new(1,1,1)
 log.TextScaled = true
 
+-- BUTTON
 local function createBtn(text,y)
     local b = Instance.new("TextButton", frame)
     b.Size = UDim2.new(0.8,0,0,35)
@@ -110,8 +123,8 @@ local function createBtn(text,y)
 end
 
 local startBtn = createBtn("START AUTO 🔥", 120)
-local hopBtn = createBtn("HOP SERVER 🔁", 160)
-local baseBtn = createBtn("🏠 Bay về Base", 200)
+local hopBtn   = createBtn("HOP SERVER NEW 🔁", 165)
+local baseBtn  = createBtn("🏠 BAY VỀ BASE", 210)
 
 --------------------------------------------------
 -- 🧲 BAY TỚI PET
@@ -141,7 +154,7 @@ local function scan()
 end
 
 --------------------------------------------------
--- 🔁 HOP
+-- 🔁 HOP SERVER
 local function hopServer()
     local placeId = game.PlaceId
 
@@ -177,7 +190,7 @@ local function findMyBase()
     end
 end
 
--- 🚀 BAY VỀ BASE
+-- 🚀 BAY MƯỢT
 local function flyTo(pos)
     local char = player.Character
     if not char then return end
@@ -195,6 +208,8 @@ baseBtn.MouseButton1Click:Connect(function()
     local pos = findMyBase()
     if pos then
         flyTo(pos)
+    else
+        warn("❌ Không tìm thấy base")
     end
 end)
 
