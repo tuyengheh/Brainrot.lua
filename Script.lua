@@ -1,5 +1,5 @@
 # Brainrot.lua 
--            repeat task.wait() until game:IsLoaded()
+-        repeat task.wait() until game:IsLoaded()
 
 --// SERVICES
 local Players = game:GetService("Players")
@@ -12,12 +12,13 @@ local player = Players.LocalPlayer
 local currentServerId = game.JobId
 
 --------------------------------------------------
--- 🎯 LIST PET
+-- 🎯 LIST PET (ĐÃ XOÁ Garama + Combinasion)
 local rareList = {
-    "admin","Ketchuru","Tiger","Lavadorito",
+    "Ketchuru","Lavadorito",
     "Tang","Tictac","Spaghetti","Eviledon",
     "Spooky","Strawberry","Meowl","Skibidi",
-    "Cigno","Lava","Rainbow","Galaxy","Yeti","Kitsune","Fruits"
+    "Cigno","Lava","Rainbow","Galaxy",
+    "Tiger","Kitsune","Yeti","Fruits"
 }
 
 local function isRare(name)
@@ -31,10 +32,42 @@ local function isRare(name)
 end
 
 --------------------------------------------------
--- ❌ BASE CHECK
+-- ❌ CHECK BASE CỦA MÌNH
 local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
-    return owner and owner.Value == player
+    if owner and owner.Value == player then
+        return true
+    end
+    return false
+end
+
+--------------------------------------------------
+-- ❌ CHECK PET TRONG BASE (ANTI SCAN NHẦM)
+local function isInsideBase(obj)
+    local basePos = nil
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        local owner = v:FindFirstChild("Owner")
+        if owner and owner.Value == player then
+            local p = v:FindFirstChildWhichIsA("BasePart")
+            if p then
+                basePos = p.Position
+                break
+            end
+        end
+    end
+
+    if not basePos then return false end
+
+    local part = obj:FindFirstChildWhichIsA("BasePart")
+    if not part then return false end
+
+    -- nếu gần base < 50 studs thì bỏ qua
+    if (part.Position - basePos).Magnitude < 50 then
+        return true
+    end
+
+    return false
 end
 
 --------------------------------------------------
@@ -42,13 +75,13 @@ end
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 260, 0, 250)
-frame.Position = UDim2.new(0.5, -130, 0.3, 0)
+frame.Size = UDim2.new(0, 270, 0, 260)
+frame.Position = UDim2.new(0.5, -135, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 Instance.new("UICorner", frame)
 
--- DRAG
+-- DRAG MOBILE
 local dragging, dragInput, dragStart, startPos
 
 frame.InputBegan:Connect(function(input)
@@ -93,13 +126,13 @@ end)
 -- TEXT
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "RAINBOW FARM 🌈"
+title.Text = "RAINBOW AUTO 🌈"
 title.BackgroundTransparency = 1
 title.TextScaled = true
 title.TextColor3 = Color3.new(1,1,1)
 
 local log = Instance.new("TextLabel", frame)
-log.Size = UDim2.new(1,0,0,60)
+log.Size = UDim2.new(1,0,0,70)
 log.Position = UDim2.new(0,0,0,30)
 log.BackgroundTransparency = 1
 log.Text = "Ready..."
@@ -119,9 +152,9 @@ local function btn(txt,y)
     return b
 end
 
-local startBtn = btn("START AUTO",100)
-local hopBtn   = btn("HOP SERVER",145)
-local flyBtn   = btn("FLY BASE ⚡",190)
+local startBtn = btn("START AUTO",110)
+local hopBtn   = btn("HOP SERVER",155)
+local tpBtn    = btn("TP BASE ⚡",200)
 
 --------------------------------------------------
 -- 🏠 FIND BASE
@@ -136,8 +169,8 @@ local function findBase()
 end
 
 --------------------------------------------------
--- ✈️ BAY ANTI (NÚT)
-local function flyToBaseFast()
+-- ⚡ TP BASE
+local function tpToBaseSafe()
     local char = player.Character
     if not char then return end
 
@@ -147,27 +180,16 @@ local function flyToBaseFast()
     local base = findBase()
     if not base then return end
 
-    -- bay lên ~5m
-    local up = hrp.Position + Vector3.new(0,15,0)
-
-    for i=1,10 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(up),0.4)
-        task.wait(0.02)
-    end
-
+    hrp.CFrame = hrp.CFrame + Vector3.new(0,5,0)
     task.wait(0.1)
 
-    -- bay về base
-    for i=1,20 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(base + Vector3.new(0,3,0)),0.35)
-        task.wait(0.02)
-    end
+    hrp.CFrame = CFrame.new(base + Vector3.new(0,3,0))
 end
 
-flyBtn.MouseButton1Click:Connect(flyToBaseFast)
+tpBtn.MouseButton1Click:Connect(tpToBaseSafe)
 
 --------------------------------------------------
--- 🤖 AUTO DETECT CẦM PET
+-- 🤖 AUTO CẦM PET
 task.spawn(function()
     while true do
         task.wait(0.5)
@@ -178,7 +200,7 @@ task.spawn(function()
         for _,tool in pairs(char:GetChildren()) do
             if tool:IsA("Tool") and isRare(tool.Name) then
                 log.Text = "📦 "..tool.Name
-                flyToBaseFast()
+                tpToBaseSafe()
                 task.wait(2)
             end
         end
@@ -189,7 +211,10 @@ end)
 -- 🔍 SCAN
 local function scan()
     for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and not isMyBase(v) then
+        if v:IsA("Model")
+        and not isMyBase(v)
+        and not isInsideBase(v) then
+
             if isRare(v.Name) then
                 return v
             end
