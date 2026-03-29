@@ -1,10 +1,5 @@
 -- 🔥 AUTO LINK (bạn thay nếu muốn auto vĩnh viễn)
-local AUTO_URL = "https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua"
-
--- 🔥 XÓA GUI CŨ
-pcall(function()
-    game.Players.LocalPlayer.PlayerGui:FindFirstChild("RAINBOW_GUI"):Destroy()
-end)
+local AUTO_URL = "https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua
 
 --// SERVICES
 local Players = game:GetService("Players")
