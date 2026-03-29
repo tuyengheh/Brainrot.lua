@@ -13,7 +13,7 @@ local currentServerId = game.JobId
 --------------------------------------------------
 -- 🎯 LIST PET
 local rareList = {
-    "Garama","Ketchuru","Combinasion","Lavadorito",
+    "admin","Ketchuru","Combinasion","Lavadorito",
     "Tang","Tictac","Spaghetti","Eviledon",
     "Spooky","Strawberry","Meowl","Skibidi",
     "Cigno","Lava","Rainbow","Galaxy"
@@ -41,7 +41,7 @@ end
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 260, 0, 210)
+frame.Size = UDim2.new(0, 260, 0, 250)
 frame.Position = UDim2.new(0.5, -130, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
@@ -84,7 +84,7 @@ UIS.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- 🌈 MÀU
+-- 🌈 RAINBOW
 RunService.RenderStepped:Connect(function()
     frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,1,1)
 end)
@@ -92,7 +92,7 @@ end)
 -- TEXT
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "RAINBOW AUTO 🌈"
+title.Text = "RAINBOW FARM 🌈"
 title.BackgroundTransparency = 1
 title.TextScaled = true
 title.TextColor3 = Color3.new(1,1,1)
@@ -120,6 +120,7 @@ end
 
 local startBtn = btn("START AUTO",100)
 local hopBtn   = btn("HOP SERVER",145)
+local flyBtn   = btn("FLY BASE ⚡",190)
 
 --------------------------------------------------
 -- 🏠 FIND BASE
@@ -134,8 +135,8 @@ local function findBase()
 end
 
 --------------------------------------------------
--- ✈️ BAY ANTI
-local function flySafeToBase()
+-- ✈️ BAY ANTI (NÚT)
+local function flyToBaseFast()
     local char = player.Character
     if not char then return end
 
@@ -145,25 +146,27 @@ local function flySafeToBase()
     local base = findBase()
     if not base then return end
 
-    -- bay lên cao
-    local high = hrp.Position + Vector3.new(0, 40, 0)
+    -- bay lên ~5m
+    local up = hrp.Position + Vector3.new(0,15,0)
 
-    for i=1,15 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(high),0.25)
-        task.wait(0.03)
+    for i=1,10 do
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(up),0.4)
+        task.wait(0.02)
     end
 
-    task.wait(0.2)
+    task.wait(0.1)
 
     -- bay về base
-    for i=1,25 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(base + Vector3.new(0,5,0)),0.2)
-        task.wait(0.03)
+    for i=1,20 do
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(base + Vector3.new(0,3,0)),0.35)
+        task.wait(0.02)
     end
 end
 
+flyBtn.MouseButton1Click:Connect(flyToBaseFast)
+
 --------------------------------------------------
--- 🧠 AUTO DETECT ĐANG CẦM PET
+-- 🤖 AUTO DETECT CẦM PET
 task.spawn(function()
     while true do
         task.wait(0.5)
@@ -172,13 +175,10 @@ task.spawn(function()
         if not char then continue end
 
         for _,tool in pairs(char:GetChildren()) do
-            if tool:IsA("Tool") then
-                -- phát hiện đang cầm pet
-                if isRare(tool.Name) then
-                    log.Text = "📦 Đang cầm: "..tool.Name
-                    flySafeToBase()
-                    task.wait(2)
-                end
+            if tool:IsA("Tool") and isRare(tool.Name) then
+                log.Text = "📦 "..tool.Name
+                flyToBaseFast()
+                task.wait(2)
             end
         end
     end
