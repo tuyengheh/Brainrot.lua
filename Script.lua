@@ -95,7 +95,40 @@ local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
     return owner and owner.Value == player
 end
+--------------------------------------------------
+-- 📦 MINI GUI (THU NHỎ)
 
+local miniBtn = Instance.new("TextButton", gui)
+miniBtn.Size = UDim2.new(0,50,0,50)
+miniBtn.Position = UDim2.new(0,10,0.5,0)
+miniBtn.Text = "+"
+miniBtn.Visible = false
+miniBtn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+miniBtn.TextColor3 = Color3.new(1,1,1)
+miniBtn.TextScaled = true
+Instance.new("UICorner", miniBtn).CornerRadius = UDim.new(1,0)
+
+-- nút thu nhỏ
+local hideBtn = Instance.new("TextButton", frame)
+hideBtn.Size = UDim2.new(0,30,0,30)
+hideBtn.Position = UDim2.new(1,-35,0,5)
+hideBtn.Text = "-"
+hideBtn.BackgroundColor3 = Color3.fromRGB(255,80,80)
+hideBtn.TextColor3 = Color3.new(1,1,1)
+hideBtn.TextScaled = true
+Instance.new("UICorner", hideBtn)
+
+-- thu nhỏ
+hideBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    miniBtn.Visible = true
+end)
+
+-- mở lại
+miniBtn.MouseButton1Click:Connect(function()
+    frame.Visible = true
+    miniBtn.Visible = false
+end)
 --------------------------------------------------
 -- BUTTON
 local function btn(txt,y)
