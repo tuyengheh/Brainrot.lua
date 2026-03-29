@@ -1,5 +1,4 @@
 # Brainrot.lua 
--- GUI LOAD FIRST
 local player = game.Players.LocalPlayer
 local pg = player:WaitForChild("PlayerGui")
 
@@ -61,9 +60,9 @@ local function btn(txt,y)
     return b
 end
 
-local tpBtn   = btn("TP BASE ⚡",80)
+local flyBtn  = btn("FLY SPAWN 🚀",80)
 local scanBtn = btn("SCAN PET 🔍",125)
-local hopBtn  = btn("kiếm sever mới 🆕",170)
+local hopBtn  = btn("SERVER MỚI 🆕",170)
 
 --------------------------------------------------
 -- DRAG
@@ -95,30 +94,34 @@ UIS.InputEnded:Connect(function()
 end)
 
 --------------------------------------------------
--- 🏠 BASE
-local function findBase()
-    for _,v in pairs(workspace:GetDescendants()) do
-        local owner = v:FindFirstChild("Owner")
-        if owner and owner.Value == player then
-            local p = v:FindFirstChildWhichIsA("BasePart")
-            if p then return p.Position end
-        end
-    end
-end
+-- 💾 LƯU SPAWN
+local spawnCFrame = nil
 
-local function tpBase()
+player.CharacterAdded:Connect(function(char)
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    spawnCFrame = hrp.CFrame
+end)
+
+--------------------------------------------------
+-- 🚀 FLY SPAWN (MƯỢT)
+local function flyToSpawn()
     local char = player.Character
     if not char then return end
 
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    local base = findBase()
+    if not hrp or not spawnCFrame then return end
 
-    if hrp and base then
-        hrp.CFrame = CFrame.new(base + Vector3.new(0,3,0))
-        log.Text = "🏠 TP DONE"
-    else
-        log.Text = "❌ NO BASE"
+    log.Text = "🚀 BAY VỀ SPAWN..."
+
+    local spd = 5 -- tốc độ mặc định
+
+    for i = 1, (20 / spd) do
+        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame, 0.15 * spd)
+        task.wait(0.03)
     end
+
+    hrp.CFrame = spawnCFrame
+    log.Text = "✅ DONE"
 end
 
 --------------------------------------------------
@@ -163,7 +166,7 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- 🔥 HOP SERVER CỰC MỚI
+-- 🔥 HOP SERVER
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
@@ -179,55 +182,28 @@ local function hopNew()
         local data = HttpService:JSONDecode(res)
 
         for _,v in pairs(data.data) do
-            if v.playing <= 2 then -- 🎯 server cực mới
-                log.Text = "🆕 "..v.playing.."/"..v.maxPlayers
+            if v.playing <= 2 then
                 TeleportService:TeleportToPlaceInstance(placeId,v.id,player)
                 return
             end
         end
     end
 
-    log.Text = "⚠️ KHÔNG TÌM THẤY → REJOIN"
     TeleportService:Teleport(placeId)
 end
 
-------------------------------------------------
-local UIS = game:GetService("UserInputService")
-
-UIS.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-
+--------------------------------------------------
+-- ⌨️ KEY K
+UIS.InputBegan:Connect(function(input, gp)
+    if gp then return end
     if input.KeyCode == Enum.KeyCode.K then
-        main.Enabled = not main.Enabled
+        gui.Enabled = not gui.Enabled
     end
 end)
 
 --------------------------------------------------
-local function goToSpawn()
-    local char = player.Character
-    if not char then return end
-
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp or not spawnCFrame then return end
-
-    -- lấy speed từ GUI
-    local spd = tonumber(speed.Text) or 1
-
-    -- clamp cho đỡ lỗi (1 -> 10)
-    if spd < 1 then spd = 1 end
-    if spd > 10 then spd = 10 end
-
-    -- bay mượt theo speed
-    for i = 1, (20 / spd) do
-        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame, 0.15 * spd)
-        task.wait(0.03)
-    end
-
-    hrp.CFrame = spawnCFrame
-end
---------------------------------------------------
 -- CONNECT
-tpBtn.MouseButton1Click:Connect(tpBase)
+flyBtn.MouseButton1Click:Connect(flyToSpawn)
 hopBtn.MouseButton1Click:Connect(hopNew)
 
 log.Text = "READY ✅"
