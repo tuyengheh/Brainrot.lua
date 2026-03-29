@@ -14,10 +14,10 @@ local currentServerId = game.JobId
 --------------------------------------------------
 -- 🎯 LIST PET
 local rareList = {
-    "admin","Ketchuru","Combinasion","Lavadorito",
+    "admin","Ketchuru","Tiger","Lavadorito",
     "Tang","Tictac","Spaghetti","Eviledon",
     "Spooky","Strawberry","Meowl","Skibidi",
-    "Cigno","Lava","Rainbow","Galaxy"
+    "Cigno","Lava","Rainbow","Galaxy","Yeti","Kitsune","Fruits"
 }
 
 local function isRare(name)
