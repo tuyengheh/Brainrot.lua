@@ -6,13 +6,56 @@ local pg = player:WaitForChild("PlayerGui")
 local gui = Instance.new("ScreenGui", pg)
 gui.Name = "AUTO_FARM"
 
+-- 🌫 BLUR
+local blur = Instance.new("BlurEffect", game.Lighting)
+blur.Size = 0
+task.spawn(function()
+    for i = 1,20 do
+        blur.Size = i
+        task.wait(0.02)
+    end
+end)
+
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0,260,0,260)
 frame.Position = UDim2.new(0.5,-130,0.4,-130)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
-frame.Draggable = true
 Instance.new("UICorner",frame)
+
+-- 🌈 ANIMATION
+local RunService = game:GetService("RunService")
+RunService.RenderStepped:Connect(function()
+    frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,0.6,1)
+end)
+
+-- ✨ DRAG MƯỢT
+local UIS = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UIS.InputEnded:Connect(function()
+    dragging = false
+end)
 
 local title = Instance.new("TextLabel",frame)
 title.Size = UDim2.new(1,0,0,30)
@@ -63,6 +106,15 @@ local function btn(txt,y)
     b.TextScaled = true
     b.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner",b)
+
+    -- hover effect
+    b.MouseEnter:Connect(function()
+        b.BackgroundColor3 = Color3.fromRGB(80,80,80)
+    end)
+    b.MouseLeave:Connect(function()
+        b.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    end)
+
     return b
 end
 
@@ -87,7 +139,7 @@ player.CharacterAdded:Connect(function()
 end)
 
 --------------------------------------------------
--- 🚀 FLY SPAWN
+-- 🚀 FLY SPAWN (GIỮ NGUYÊN)
 local function flyToSpawn()
     local char = player.Character
     if not char then return end
@@ -139,17 +191,26 @@ local function flyToPet(part)
 end
 
 --------------------------------------------------
+-- ⚡ AUTO NHẶT (FIX)
+local function autoPickup(part)
+    for _,v in pairs(part:GetDescendants()) do
+        if v:IsA("ProximityPrompt") then
+            v.HoldDuration = 0
+            v.RequiresLineOfSight = false
+            fireproximityprompt(v)
+        end
+    end
+end
+
+--------------------------------------------------
 -- 🔍 SCAN
 local function scanPet()
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and isTarget(v.Name) and not isMyBase(v) then
-            
             local part = v:FindFirstChildWhichIsA("BasePart")
-
-            if part and part:IsDescendantOf(workspace) then
+            if part then
                 return v, part
             end
-
         end
     end
 end
@@ -166,31 +227,17 @@ scanBtn.MouseButton1Click:Connect(function()
 
         if pet and part then
             log.Text = "🔥 "..pet.Name
-
             createESP(pet)
 
             task.wait(0.2)
 
             flyToPet(part)
 
-task.wait(0.3)
+            task.wait(0.3)
 
-autoPickup(part)
-                    -- ⚡ AUTO NHẶT PET (KHÔNG CẦN BẤM E)
-local function autoPickup()
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("ProximityPrompt") then
-            
-            -- khoảng cách gần
-            v.HoldDuration = 0
-            v.RequiresLineOfSight = false
+            autoPickup(part)
 
-            fireproximityprompt(v)
-        end
-    end
-                    end
-
-            log.Text = "✅ ĐÃ TỚI PET"
+            log.Text = "✅ DONE"
         else
             log.Text = "❌ KHÔNG CÓ"
         end
@@ -198,13 +245,22 @@ local function autoPickup()
 end)
 
 --------------------------------------------------
--- 🔥 HOP SERVER
+-- 📊 FAKE PET SERVER
+local fakePets = {"Kitsune","Yeti","Tiger","Nothing","Rainbow"}
+
+local function randomPet()
+    return fakePets[math.random(1,#fakePets)]
+end
+
+--------------------------------------------------
+-- 🔥 HOP SERVER (HUB STYLE)
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
 function hopNew()
-    local placeId = game.PlaceId
+    log.Text = "🔎 SCANNING SERVER..."
 
+    local placeId = game.PlaceId
     local s,res = pcall(function()
         return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
     end)
@@ -212,8 +268,16 @@ function hopNew()
     if s then
         local data = HttpService:JSONDecode(res)
 
-        for _,v in pairs(data.data) do
+        for i,v in pairs(data.data) do
+            local pet = randomPet()
+
+            log.Text = "SV"..i.." | "..v.playing.."/"..v.maxPlayers.." | 🐾 "..pet
+            task.wait(0.08)
+
             if v.playing <= 2 then
+                log.Text = "🆕 JOIN ("..pet..")"
+                task.wait(0.2)
+
                 TeleportService:TeleportToPlaceInstance(placeId,v.id,player)
                 return
             end
@@ -225,7 +289,6 @@ end
 
 --------------------------------------------------
 -- ⌨️ KEY K
-local UIS = game:GetService("UserInputService")
 UIS.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.K then
