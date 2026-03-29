@@ -1,5 +1,5 @@
--- 🔥 AUTO LINK (bạn thay nếu muốn auto vĩnh viễn)
-local AUTO_URL = "https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua
+-- 🔥 LINK AUTO EXECUTE (bạn có thể giữ nguyên)
+local AUTO_URL = "https://raw.githubusercontent.com/tuyengheh/Brainrot.lua/main/Brainrot.lua"
 
 --// SERVICES
 local Players = game:GetService("Players")
@@ -50,7 +50,7 @@ frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,15)
 
--- 🖐️ DRAG (FIX CHUẨN)
+-- 🖐️ DRAG (mobile)
 local dragging, dragInput, dragStart, startPos
 
 frame.InputBegan:Connect(function(input)
@@ -147,7 +147,7 @@ local function fly(pos)
 end
 
 --------------------------------------------------
--- 🧲 MOVE + RETURN
+-- 🧲 NHẶT + VỀ BASE
 local function takePet(obj)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     local part = obj:FindFirstChildWhichIsA("BasePart")
@@ -176,7 +176,7 @@ local function scan()
 end
 
 --------------------------------------------------
--- 🔁 HOP (FIX KHÔNG REJOIN)
+-- 🔁 HOP
 local function hop()
     local placeId = game.PlaceId
 
@@ -202,40 +202,28 @@ hopBtn.MouseButton1Click:Connect(hop)
 
 --------------------------------------------------
 -- 🔁 AUTO
-local running = false
-
 startBtn.MouseButton1Click:Connect(function()
-    running = not running
+    startBtn.Text = "RUNNING"
 
-    if running then
-        startBtn.Text = "RUNNING"
+    task.spawn(function()
+        task.wait(1)
 
-        task.spawn(function()
-            task.wait(1)
+        local pet = scan()
 
-            local pet = scan()
-
-            if pet then
-                log.Text = "🔥 "..pet.Name
-                takePet(pet)
-                startBtn.Text = "FOUND"
-                running = false
-            else
-                log.Text = "❌ Hop..."
-                hop()
-            end
-        end)
-    else
-        startBtn.Text = "START AUTO"
-    end
+        if pet then
+            log.Text = "🔥 "..pet.Name
+            takePet(pet)
+            startBtn.Text = "FOUND"
+        else
+            log.Text = "❌ Hop..."
+            hop()
+        end
+    end)
 end)
 
 --------------------------------------------------
--- 🔥 AUTO EXECUTE SAU HOP (QUAN TRỌNG)
+-- 🔥 AUTO EXECUTE SAU HOP
 task.spawn(function()
     repeat task.wait() until game:IsLoaded()
-
-    if AUTO_URL then
-        loadstring(game:HttpGet(AUTO_URL))()
-    end
+    loadstring(game:HttpGet(AUTO_URL))()
 end)
