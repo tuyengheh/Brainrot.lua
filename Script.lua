@@ -21,7 +21,6 @@ local rareList = {
     "Eviledon",
     "Los Spaghettis",
     "Spooky and Pumpky",
-    "La Grande Combinasion",
     "Strawberry Elephant",
     "Meowl",
     "Skibidi Toilet",
