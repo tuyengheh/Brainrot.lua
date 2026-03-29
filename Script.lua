@@ -24,7 +24,10 @@ local rareList = {
     "Strawberry Elephant",
     "Meowl",
     "Skibidi Toilet",
-    "Cigno Fulgoro"
+    "Cigno Fulgoro",
+    "Lava",
+    "Galaxy",
+    "Rainbow"
 }
 
 local function isRare(name)
