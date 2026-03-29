@@ -96,38 +96,44 @@ local function isMyBase(obj)
     return owner and owner.Value == player
 end
 --------------------------------------------------
--- 📦 MINI GUI (THU NHỎ)
+-- 📱 MOBILE DRAG (KÉO MƯỢT)
+local UIS = game:GetService("UserInputService")
 
-local miniBtn = Instance.new("TextButton", gui)
-miniBtn.Size = UDim2.new(0,50,0,50)
-miniBtn.Position = UDim2.new(0,10,0.5,0)
-miniBtn.Text = "+"
-miniBtn.Visible = false
-miniBtn.BackgroundColor3 = Color3.fromRGB(0,0,0)
-miniBtn.TextColor3 = Color3.new(1,1,1)
-miniBtn.TextScaled = true
-Instance.new("UICorner", miniBtn).CornerRadius = UDim.new(1,0)
+local dragging = false
+local dragStart = nil
+local startPos = nil
 
--- nút thu nhỏ
-local hideBtn = Instance.new("TextButton", frame)
-hideBtn.Size = UDim2.new(0,30,0,30)
-hideBtn.Position = UDim2.new(1,-35,0,5)
-hideBtn.Text = "-"
-hideBtn.BackgroundColor3 = Color3.fromRGB(255,80,80)
-hideBtn.TextColor3 = Color3.new(1,1,1)
-hideBtn.TextScaled = true
-Instance.new("UICorner", hideBtn)
-
--- thu nhỏ
-hideBtn.MouseButton1Click:Connect(function()
-    frame.Visible = false
-    miniBtn.Visible = true
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
 end)
 
--- mở lại
-miniBtn.MouseButton1Click:Connect(function()
-    frame.Visible = true
-    miniBtn.Visible = false
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragStart = input.Position
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.Touch then
+        local delta = input.Position - dragStart
+
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
 end)
 --------------------------------------------------
 -- BUTTON
