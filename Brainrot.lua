@@ -6,65 +6,30 @@ local pg = player:WaitForChild("PlayerGui")
 local gui = Instance.new("ScreenGui", pg)
 gui.Name = "AUTO_FARM"
 
--- 🌫 BLUR
-local blur = Instance.new("BlurEffect", game.Lighting)
-blur.Size = 0
-task.spawn(function()
-    for i = 1,20 do
-        blur.Size = i
-        task.wait(0.02)
-    end
-end)
-
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0,260,0,260)
 frame.Position = UDim2.new(0.5,-130,0.4,-130)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
+frame.Draggable = true
 Instance.new("UICorner",frame)
 
--- 🌈 ANIMATION
-local RunService = game:GetService("RunService")
-RunService.RenderStepped:Connect(function()
-    frame.BackgroundColor3 = Color3.fromHSV((tick()%5)/5,0.6,1)
-end)
+-- 📱 SCROLL MOBILE
+local scroll = Instance.new("ScrollingFrame", frame)
+scroll.Size = UDim2.new(1,0,1,0)
+scroll.CanvasSize = UDim2.new(0,0,0,320)
+scroll.BackgroundTransparency = 1
+scroll.ScrollBarThickness = 4
 
--- ✨ DRAG MƯỢT
-local UIS = game:GetService("UserInputService")
-local dragging, dragInput, dragStart, startPos
-
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if dragging then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UIS.InputEnded:Connect(function()
-    dragging = false
-end)
-
-local title = Instance.new("TextLabel",frame)
+-- UI
+local title = Instance.new("TextLabel",scroll)
 title.Size = UDim2.new(1,0,0,30)
 title.Text = "AUTO FARM PRO 🔥"
 title.BackgroundTransparency = 1
 title.TextScaled = true
 title.TextColor3 = Color3.new(1,1,1)
 
-local log = Instance.new("TextLabel",frame)
+local log = Instance.new("TextLabel",scroll)
 log.Size = UDim2.new(1,0,0,40)
 log.Position = UDim2.new(0,0,0,30)
 log.BackgroundTransparency = 1
@@ -75,7 +40,7 @@ log.TextColor3 = Color3.new(1,1,1)
 --------------------------------------------------
 -- 🎯 PET LIST
 local targetList = {
-    "Kitsune","Yeti","Tiger","Fruits","Rainbow","radioactive","Strawberry","Meowl"
+"Kitsune","Yeti","Tiger","Fruits","Rainbow","radioactive","Strawberry","Meowl"
 }
 
 local function isTarget(name)
@@ -94,55 +59,11 @@ local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
     return owner and owner.Value == player
 end
---------------------------------------------------
--- 📱 MOBILE DRAG (KÉO MƯỢT)
-local UIS = game:GetService("UserInputService")
 
-local dragging = false
-local dragStart = nil
-local startPos = nil
-
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
-    end
-end)
-
-frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        dragStart = input.Position
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.Touch then
-        local delta = input.Position - dragStart
-
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
--- mở lại
-miniBtn.MouseButton1Click:Connect(function()
-    frame.Visible = true
-    miniBtn.Visible = false
-end)
 --------------------------------------------------
 -- BUTTON
 local function btn(txt,y)
-    local b = Instance.new("TextButton",frame)
+    local b = Instance.new("TextButton",scroll)
     b.Size = UDim2.new(0.8,0,0,35)
     b.Position = UDim2.new(0.1,0,0,y)
     b.Text = txt
@@ -150,15 +71,6 @@ local function btn(txt,y)
     b.TextScaled = true
     b.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner",b)
-
-    -- hover effect
-    b.MouseEnter:Connect(function()
-        b.BackgroundColor3 = Color3.fromRGB(80,80,80)
-    end)
-    b.MouseLeave:Connect(function()
-        b.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    end)
-
     return b
 end
 
@@ -235,7 +147,7 @@ local function flyToPet(part)
 end
 
 --------------------------------------------------
--- ⚡ AUTO NHẶT (FIX)
+-- ⚡ AUTO NHẶT (FIX CHUẨN)
 local function autoPickup(part)
     for _,v in pairs(part:GetDescendants()) do
         if v:IsA("ProximityPrompt") then
@@ -271,12 +183,11 @@ scanBtn.MouseButton1Click:Connect(function()
 
         if pet and part then
             log.Text = "🔥 "..pet.Name
-            createESP(pet)
 
+            createESP(pet)
             task.wait(0.2)
 
             flyToPet(part)
-
             task.wait(0.3)
 
             autoPickup(part)
@@ -289,22 +200,13 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- 📊 FAKE PET SERVER
-local fakePets = {"Kitsune","Yeti","Tiger","Nothing","Rainbow"}
-
-local function randomPet()
-    return fakePets[math.random(1,#fakePets)]
-end
-
---------------------------------------------------
--- 🔥 HOP SERVER (HUB STYLE)
+-- 🔥 HOP SERVER
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
 function hopNew()
-    log.Text = "🔎 SCANNING SERVER..."
-
     local placeId = game.PlaceId
+
     local s,res = pcall(function()
         return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
     end)
@@ -312,16 +214,8 @@ function hopNew()
     if s then
         local data = HttpService:JSONDecode(res)
 
-        for i,v in pairs(data.data) do
-            local pet = randomPet()
-
-            log.Text = "SV"..i.." | "..v.playing.."/"..v.maxPlayers.." | 🐾 "..pet
-            task.wait(0.08)
-
+        for _,v in pairs(data.data) do
             if v.playing <= 2 then
-                log.Text = "🆕 JOIN ("..pet..")"
-                task.wait(0.2)
-
                 TeleportService:TeleportToPlaceInstance(placeId,v.id,player)
                 return
             end
@@ -333,6 +227,7 @@ end
 
 --------------------------------------------------
 -- ⌨️ KEY K
+local UIS = game:GetService("UserInputService")
 UIS.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.K then
