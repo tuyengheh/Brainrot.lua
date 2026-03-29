@@ -1,4 +1,3 @@
-
 --// PLAYER
 local player = game.Players.LocalPlayer
 local pg = player:WaitForChild("PlayerGui")
@@ -31,7 +30,7 @@ log.TextScaled = true
 log.TextColor3 = Color3.new(1,1,1)
 
 --------------------------------------------------
--- 🎯 PET LIST (CHỈ SCAN CÁI NÀY)
+-- 🎯 PET LIST
 local targetList = {
     "Kitsune","Yeti","Tiger","Fruits","Rainbow","radioactive","Strawberry","Meowl"
 }
@@ -47,7 +46,7 @@ local function isTarget(name)
 end
 
 --------------------------------------------------
--- ❌ BỎ BASE CỦA MÌNH
+-- ❌ BỎ BASE
 local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
     return owner and owner.Value == player
@@ -68,7 +67,7 @@ local function btn(txt,y)
 end
 
 local flyBtn  = btn("FLY SPAWN 🚀",80)
-local scanBtn = btn("SCAN + AUTO 🧠",125)
+local scanBtn = btn("SCAN + ESP 🔍",125)
 local hopBtn  = btn("SERVER MỚI 🆕",170)
 
 --------------------------------------------------
@@ -88,7 +87,7 @@ player.CharacterAdded:Connect(function()
 end)
 
 --------------------------------------------------
--- 🚀 BAY VỀ SPAWN
+-- 🚀 FLY SPAWN
 local function flyToSpawn()
     local char = player.Character
     if not char then return end
@@ -105,31 +104,50 @@ local function flyToSpawn()
 end
 
 --------------------------------------------------
--- 🧲 BAY TỚI PET
-local function flyToPet(obj)
+-- 👁 ESP
+local currentESP = nil
+
+local function createESP(obj)
+    if currentESP then
+        currentESP:Destroy()
+    end
+
+    local hl = Instance.new("Highlight")
+    hl.FillColor = Color3.fromRGB(255,0,0)
+    hl.OutlineColor = Color3.fromRGB(255,255,255)
+    hl.FillTransparency = 0.5
+    hl.Parent = obj
+
+    currentESP = hl
+end
+
+--------------------------------------------------
+-- 🧲 FLY PET
+local function flyToPet(part)
     local char = player.Character
     if not char then return end
 
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    local part = obj:FindFirstChildWhichIsA("BasePart")
+    if not hrp then return end
 
-    if hrp and part then
-        for i = 1,15 do
-            hrp.CFrame = hrp.CFrame:Lerp(part.CFrame + Vector3.new(0,3,0), 0.3)
-            task.wait(0.02)
-        end
+    for i = 1,12 do
+        hrp.CFrame = hrp.CFrame:Lerp(part.CFrame + Vector3.new(0,3,0), 0.35)
+        task.wait(0.02)
     end
+
+    hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
 end
 
 --------------------------------------------------
--- 🔍 SCAN CHUẨN
+-- 🔍 SCAN
 local function scanPet()
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and isTarget(v.Name) and not isMyBase(v) then
             
             local part = v:FindFirstChildWhichIsA("BasePart")
-            if part then
-                return v
+
+            if part and part:IsDescendantOf(workspace) then
+                return v, part
             end
 
         end
@@ -137,28 +155,44 @@ local function scanPet()
 end
 
 --------------------------------------------------
--- 🔥 AUTO FARM
+-- 🔥 SCAN + ESP + BAY
 scanBtn.MouseButton1Click:Connect(function()
     log.Text = "🔍 SCANNING..."
 
     task.spawn(function()
-        task.wait(0.5)
+        task.wait(0.3)
 
-        local pet = scanPet()
+        local pet, part = scanPet()
 
-        if pet then
+        if pet and part then
             log.Text = "🔥 "..pet.Name
 
-            flyToPet(pet)
-            task.wait(0.5)
+            createESP(pet)
 
-            flyToSpawn()
+            task.wait(0.2)
 
-            log.Text = "✅ NHẶT XONG → VỀ"
+            flyToPet(part)
+
+task.wait(0.3)
+
+autoPickup(part)
+                    -- ⚡ AUTO NHẶT PET (KHÔNG CẦN BẤM E)
+local function autoPickup()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ProximityPrompt") then
+            
+            -- khoảng cách gần
+            v.HoldDuration = 0
+            v.RequiresLineOfSight = false
+
+            fireproximityprompt(v)
+        end
+    end
+                    end
+
+            log.Text = "✅ ĐÃ TỚI PET"
         else
-            log.Text = "❌ KHÔNG CÓ → HOP"
-            task.wait(0.5)
-            hopNew()
+            log.Text = "❌ KHÔNG CÓ"
         end
     end)
 end)
