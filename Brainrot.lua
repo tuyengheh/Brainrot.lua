@@ -17,7 +17,7 @@ Instance.new("UICorner",frame)
 -- 📱 SCROLL MOBILE
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
-scroll.CanvasSize = UDim2.new(0,0,0,360)
+scroll.CanvasSize = UDim2.new(0,0,0,400)
 scroll.BackgroundTransparency = 1
 scroll.ScrollBarThickness = 4
 
@@ -61,6 +61,10 @@ local function isMyBase(obj)
 end
 
 --------------------------------------------------
+-- 🧠 FIX TRÁNH PET CŨ
+local lastPet = nil
+
+--------------------------------------------------
 -- BUTTON
 local function btn(txt,y)
     local b = Instance.new("TextButton",scroll)
@@ -78,6 +82,7 @@ local flyBtn  = btn("FLY SPAWN 🚀",80)
 local scanBtn = btn("SCAN + ESP 🔍",125)
 local hopBtn  = btn("SERVER MỚI 🆕",170)
 local espBtn  = btn("PLAYER ESP 👤",215)
+local resetBtn = btn("RESET PET ♻️",260)
 
 --------------------------------------------------
 -- 💾 SPAWN
@@ -132,7 +137,7 @@ local function createESP(obj)
 end
 
 --------------------------------------------------
--- 👤 ESP PLAYER
+-- 👤 ESP PLAYER (FIX TÀNG HÌNH)
 local espEnabled = false
 local playerESP = {}
 
@@ -148,7 +153,9 @@ local function applyESP(plr, char)
     local hl = Instance.new("Highlight")
     hl.FillColor = Color3.fromRGB(0,170,255)
     hl.OutlineColor = Color3.fromRGB(255,255,255)
-    hl.FillTransparency = 0.5
+    hl.FillTransparency = 0.3
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- xuyên tường
+
     hl.Adornee = char
     hl.Parent = game.CoreGui
 
@@ -162,8 +169,22 @@ local function clearESP()
     playerESP = {}
 end
 
+-- refresh ESP
+task.spawn(function()
+    while true do
+        if espEnabled then
+            for _,plr in pairs(game.Players:GetPlayers()) do
+                if plr.Character then
+                    applyESP(plr, plr.Character)
+                end
+            end
+        end
+        task.wait(2)
+    end
+end)
+
 --------------------------------------------------
--- 🧲 FLY PET (MƯỢT)
+-- 🧲 FLY PET
 local function flyToPet(part)
     local char = player.Character
     if not char then return end
@@ -194,13 +215,15 @@ local function autoPickup(part)
 end
 
 --------------------------------------------------
--- 🔍 SCAN
+-- 🔍 SCAN (FIX)
 local function scanPet()
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and isTarget(v.Name) and not isMyBase(v) then
-            local part = v:FindFirstChildWhichIsA("BasePart")
-            if part then
-                return v, part
+            if v ~= lastPet then
+                local part = v:FindFirstChildWhichIsA("BasePart")
+                if part then
+                    return v, part
+                end
             end
         end
     end
@@ -227,6 +250,8 @@ scanBtn.MouseButton1Click:Connect(function()
 
             autoPickup(part)
 
+            lastPet = pet -- ❗ nhớ pet
+
             log.Text = "✅ DONE"
         else
             log.Text = "❌ KHÔNG CÓ"
@@ -235,18 +260,19 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- 🔥 ESP PLAYER BUTTON
+-- RESET PET
+resetBtn.MouseButton1Click:Connect(function()
+    lastPet = nil
+    log.Text = "♻️ RESET PET"
+end)
+
+--------------------------------------------------
+-- ESP PLAYER BUTTON
 espBtn.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
 
     if espEnabled then
         log.Text = "👤 ESP PLAYER ON"
-
-        for _,plr in pairs(game.Players:GetPlayers()) do
-            if plr.Character then
-                applyESP(plr, plr.Character)
-            end
-        end
     else
         log.Text = "❌ ESP OFF"
         clearESP()
