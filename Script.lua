@@ -41,7 +41,7 @@ log.TextColor3 = Color3.new(1,1,1)
 --------------------------------------------------
 -- 🎯 PET LIST
 local targetList = {
-"Kitsune","Yeti","Tiger","Fruits","Rainbow","radioactive","Strawberry","Meowl"
+"Kitsune","Yeti","Tiger","egg","Rainbow","cele","Strawberry","Meowl"
 }
 
 local function isTarget(name)
