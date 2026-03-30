@@ -2,9 +2,11 @@
 local player = game.Players.LocalPlayer
 local pg = player:WaitForChild("PlayerGui")
 
---// GUI
-local gui = Instance.new("ScreenGui", pg)
+--// GUI (KHÔNG MẤT KHI CHẾT)
+local gui = Instance.new("ScreenGui")
+gui.Parent = game.CoreGui
 gui.Name = "AUTO_FARM"
+gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0,260,0,260)
@@ -17,7 +19,7 @@ Instance.new("UICorner",frame)
 -- 📱 SCROLL MOBILE
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
-scroll.CanvasSize = UDim2.new(0,0,0,400)
+scroll.CanvasSize = UDim2.new(0,0,0,420)
 scroll.BackgroundTransparency = 1
 scroll.ScrollBarThickness = 4
 
@@ -38,20 +40,16 @@ log.TextScaled = true
 log.TextColor3 = Color3.new(1,1,1)
 
 --------------------------------------------------
--- 🎯 PET LIST
-local targetList = {
-"Void","Toxic","zioles","egg","Rainbow","cele","Strawberry","Meowl"
-}
-
-local function isTarget(name)
-    name = string.lower(name)
-    for _,v in pairs(targetList) do
-        if string.find(name, string.lower(v)) then
-            return true
-        end
-    end
-    return false
-end
+-- 🧾 INPUT PET
+local input = Instance.new("TextBox",scroll)
+input.Size = UDim2.new(0.8,0,0,35)
+input.Position = UDim2.new(0.1,0,0,75)
+input.PlaceholderText = "Nhập tên pet..."
+input.Text = ""
+input.BackgroundColor3 = Color3.fromRGB(20,20,20)
+input.TextColor3 = Color3.new(1,1,1)
+input.TextScaled = true
+Instance.new("UICorner",input)
 
 --------------------------------------------------
 -- ❌ BỎ BASE
@@ -59,10 +57,6 @@ local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
     return owner and owner.Value == player
 end
-
---------------------------------------------------
--- 🧠 FIX TRÁNH PET CŨ
-local lastPet = nil
 
 --------------------------------------------------
 -- BUTTON
@@ -78,11 +72,10 @@ local function btn(txt,y)
     return b
 end
 
-local flyBtn  = btn("FLY SPAWN 🚀",80)
-local scanBtn = btn("SCAN + ESP 🔍",125)
-local hopBtn  = btn("SERVER MỚI 🆕",170)
-local espBtn  = btn("PLAYER ESP 👤",215)
-local resetBtn = btn("RESET PET ♻️",260)
+local flyBtn  = btn("FLY SPAWN 🚀",120)
+local scanBtn = btn("SCAN + ESP 🔍",165)
+local hopBtn  = btn("SERVER MỚI 🆕",210)
+local espBtn  = btn("PLAYER ESP 👤",255)
 
 --------------------------------------------------
 -- 💾 SPAWN
@@ -137,14 +130,13 @@ local function createESP(obj)
 end
 
 --------------------------------------------------
--- 👤 ESP PLAYER (FIX TÀNG HÌNH)
+-- 👤 ESP PLAYER
 local espEnabled = false
 local playerESP = {}
 
 local function applyESP(plr, char)
     if not espEnabled then return end
     if plr == player then return end
-    if not char then return end
 
     if playerESP[plr] then
         playerESP[plr]:Destroy()
@@ -154,8 +146,7 @@ local function applyESP(plr, char)
     hl.FillColor = Color3.fromRGB(0,170,255)
     hl.OutlineColor = Color3.fromRGB(255,255,255)
     hl.FillTransparency = 0.3
-    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- xuyên tường
-
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Adornee = char
     hl.Parent = game.CoreGui
 
@@ -169,7 +160,6 @@ local function clearESP()
     playerESP = {}
 end
 
--- refresh ESP
 task.spawn(function()
     while true do
         if espEnabled then
@@ -215,22 +205,26 @@ local function autoPickup(part)
 end
 
 --------------------------------------------------
--- 🔍 SCAN (FIX)
+-- 🔍 SCAN (THEO INPUT)
 local function scanPet()
+    local keyword = string.lower(input.Text)
+
     for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and isTarget(v.Name) and not isMyBase(v) then
-            if v ~= lastPet then
+        if v:IsA("Model") and not isMyBase(v) then
+            
+            if keyword == "" or string.find(string.lower(v.Name), keyword) then
                 local part = v:FindFirstChildWhichIsA("BasePart")
                 if part then
                     return v, part
                 end
             end
+
         end
     end
 end
 
 --------------------------------------------------
--- 🔥 SCAN
+-- 🔥 SCAN BUTTON
 scanBtn.MouseButton1Click:Connect(function()
     log.Text = "🔍 SCANNING..."
 
@@ -250,20 +244,11 @@ scanBtn.MouseButton1Click:Connect(function()
 
             autoPickup(part)
 
-            lastPet = pet -- ❗ nhớ pet
-
             log.Text = "✅ DONE"
         else
             log.Text = "❌ KHÔNG CÓ"
         end
     end)
-end)
-
---------------------------------------------------
--- RESET PET
-resetBtn.MouseButton1Click:Connect(function()
-    lastPet = nil
-    log.Text = "♻️ RESET PET"
 end)
 
 --------------------------------------------------
@@ -280,7 +265,7 @@ espBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- 🔥 HOP SERVER
+-- 🔥 HOP SERVER (GIỮ NGUYÊN)
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
