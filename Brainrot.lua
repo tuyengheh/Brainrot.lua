@@ -17,14 +17,14 @@ Instance.new("UICorner",frame)
 -- 📱 SCROLL MOBILE
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
-scroll.CanvasSize = UDim2.new(0,0,0,320)
+scroll.CanvasSize = UDim2.new(0,0,0,360)
 scroll.BackgroundTransparency = 1
 scroll.ScrollBarThickness = 4
 
 -- UI
 local title = Instance.new("TextLabel",scroll)
 title.Size = UDim2.new(1,0,0,30)
-title.Text = "AUTO FARM PRO 🔥"
+title.Text = "Premium 🔥"
 title.BackgroundTransparency = 1
 title.TextScaled = true
 title.TextColor3 = Color3.new(1,1,1)
@@ -40,7 +40,7 @@ log.TextColor3 = Color3.new(1,1,1)
 --------------------------------------------------
 -- 🎯 PET LIST
 local targetList = {
-"Fruit","admin","zioles","egg","Rainbow","cele","Strawberry","Meowl"
+"Void","Toxic","zioles","egg","Rainbow","cele","Strawberry","Meowl"
 }
 
 local function isTarget(name)
@@ -77,6 +77,7 @@ end
 local flyBtn  = btn("FLY SPAWN 🚀",80)
 local scanBtn = btn("SCAN + ESP 🔍",125)
 local hopBtn  = btn("SERVER MỚI 🆕",170)
+local espBtn  = btn("PLAYER ESP 👤",215)
 
 --------------------------------------------------
 -- 💾 SPAWN
@@ -95,7 +96,7 @@ player.CharacterAdded:Connect(function()
 end)
 
 --------------------------------------------------
--- 🚀 FLY SPAWN (GIỮ NGUYÊN)
+-- 🚀 FLY SPAWN
 local function flyToSpawn()
     local char = player.Character
     if not char then return end
@@ -110,7 +111,11 @@ local function flyToSpawn()
 
     hrp.CFrame = spawnCFrame
 end
----------------------------------------------------
+
+--------------------------------------------------
+-- 👁 ESP PET
+local currentESP = nil
+
 local function createESP(obj)
     if currentESP then
         currentESP:Destroy()
@@ -120,9 +125,6 @@ local function createESP(obj)
     hl.FillColor = Color3.fromRGB(255,0,0)
     hl.OutlineColor = Color3.fromRGB(255,255,255)
     hl.FillTransparency = 0.4
-    hl.OutlineTransparency = 0
-
-    -- fix: luôn attach đúng
     hl.Adornee = obj
     hl.Parent = game.CoreGui
 
@@ -130,7 +132,38 @@ local function createESP(obj)
 end
 
 --------------------------------------------------
--- 🧲 FLY PET
+-- 👤 ESP PLAYER
+local espEnabled = false
+local playerESP = {}
+
+local function applyESP(plr, char)
+    if not espEnabled then return end
+    if plr == player then return end
+    if not char then return end
+
+    if playerESP[plr] then
+        playerESP[plr]:Destroy()
+    end
+
+    local hl = Instance.new("Highlight")
+    hl.FillColor = Color3.fromRGB(0,170,255)
+    hl.OutlineColor = Color3.fromRGB(255,255,255)
+    hl.FillTransparency = 0.5
+    hl.Adornee = char
+    hl.Parent = game.CoreGui
+
+    playerESP[plr] = hl
+end
+
+local function clearESP()
+    for _,v in pairs(playerESP) do
+        v:Destroy()
+    end
+    playerESP = {}
+end
+
+--------------------------------------------------
+-- 🧲 FLY PET (MƯỢT)
 local function flyToPet(part)
     local char = player.Character
     if not char then return end
@@ -141,7 +174,7 @@ local function flyToPet(part)
     local target = part.Position + Vector3.new(0,3,0)
 
     while (hrp.Position - target).Magnitude > 2 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.08) -- chậm + mượt
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.08)
         task.wait(0.02)
     end
 
@@ -149,7 +182,7 @@ local function flyToPet(part)
 end
 
 --------------------------------------------------
--- ⚡ AUTO NHẶT (FIX CHUẨN)
+-- ⚡ AUTO NHẶT
 local function autoPickup(part)
     for _,v in pairs(part:GetDescendants()) do
         if v:IsA("ProximityPrompt") then
@@ -174,7 +207,7 @@ local function scanPet()
 end
 
 --------------------------------------------------
--- 🔥 SCAN + ESP + BAY
+-- 🔥 SCAN
 scanBtn.MouseButton1Click:Connect(function()
     log.Text = "🔍 SCANNING..."
 
@@ -199,6 +232,25 @@ scanBtn.MouseButton1Click:Connect(function()
             log.Text = "❌ KHÔNG CÓ"
         end
     end)
+end)
+
+--------------------------------------------------
+-- 🔥 ESP PLAYER BUTTON
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+
+    if espEnabled then
+        log.Text = "👤 ESP PLAYER ON"
+
+        for _,plr in pairs(game.Players:GetPlayers()) do
+            if plr.Character then
+                applyESP(plr, plr.Character)
+            end
+        end
+    else
+        log.Text = "❌ ESP OFF"
+        clearESP()
+    end
 end)
 
 --------------------------------------------------
