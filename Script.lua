@@ -1,7 +1,6 @@
 # Brainrot.lua
 --// PLAYER
 local player = game.Players.LocalPlayer
-local pg = player:WaitForChild("PlayerGui")
 
 --// GUI (KHÔNG MẤT KHI CHẾT)
 local gui = Instance.new("ScreenGui")
@@ -17,7 +16,7 @@ frame.Active = true
 frame.Draggable = true
 Instance.new("UICorner",frame)
 
--- 📱 SCROLL MOBILE
+-- 📱 SCROLL
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
 scroll.CanvasSize = UDim2.new(0,0,0,420)
@@ -40,26 +39,16 @@ log.Text = "READY"
 log.TextScaled = true
 log.TextColor3 = Color3.new(1,1,1)
 
---------------------------------------------------
--- 🧾 INPUT PET
+-- INPUT PET
 local input = Instance.new("TextBox",scroll)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,75)
 input.PlaceholderText = "Nhập tên pet..."
-input.Text = ""
 input.BackgroundColor3 = Color3.fromRGB(20,20,20)
 input.TextColor3 = Color3.new(1,1,1)
 input.TextScaled = true
 Instance.new("UICorner",input)
 
---------------------------------------------------
--- ❌ BỎ BASE
-local function isMyBase(obj)
-    local owner = obj:FindFirstChild("Owner")
-    return owner and owner.Value == player
-end
-
---------------------------------------------------
 -- BUTTON
 local function btn(txt,y)
     local b = Instance.new("TextButton",scroll)
@@ -74,14 +63,33 @@ local function btn(txt,y)
 end
 
 local flyBtn  = btn("FLY SPAWN 🚀",120)
-local scanBtn = btn("SCAN + ESP 🔍",165)
+local scanBtn = btn("AUTO FARM 🔥",165)
 local hopBtn  = btn("SERVER MỚI 🆕",210)
 local espBtn  = btn("PLAYER ESP 👤",255)
 
 --------------------------------------------------
+-- ❌ BỎ BASE
+local function isMyBase(obj)
+    local owner = obj:FindFirstChild("Owner")
+    return owner and owner.Value == player
+end
+
+--------------------------------------------------
+-- 🚫 NOCLIP
+local noclip = false
+game:GetService("RunService").Stepped:Connect(function()
+    if noclip and player.Character then
+        for _,v in pairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
+
+--------------------------------------------------
 -- 💾 SPAWN
 local spawnCFrame
-
 local function setSpawn()
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -99,7 +107,6 @@ end)
 local function flyToSpawn()
     local char = player.Character
     if not char then return end
-
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp or not spawnCFrame then return end
 
@@ -107,18 +114,14 @@ local function flyToSpawn()
         hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame, 0.2)
         task.wait(0.03)
     end
-
     hrp.CFrame = spawnCFrame
 end
 
 --------------------------------------------------
 -- 👁 ESP PET
 local currentESP = nil
-
 local function createESP(obj)
-    if currentESP then
-        currentESP:Destroy()
-    end
+    if currentESP then currentESP:Destroy() end
 
     local hl = Instance.new("Highlight")
     hl.FillColor = Color3.fromRGB(255,0,0)
@@ -136,16 +139,12 @@ local espEnabled = false
 local playerESP = {}
 
 local function applyESP(plr, char)
-    if not espEnabled then return end
-    if plr == player then return end
+    if not espEnabled or plr == player then return end
 
-    if playerESP[plr] then
-        playerESP[plr]:Destroy()
-    end
+    if playerESP[plr] then playerESP[plr]:Destroy() end
 
     local hl = Instance.new("Highlight")
     hl.FillColor = Color3.fromRGB(0,170,255)
-    hl.OutlineColor = Color3.fromRGB(255,255,255)
     hl.FillTransparency = 0.3
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.Adornee = char
@@ -155,9 +154,7 @@ local function applyESP(plr, char)
 end
 
 local function clearESP()
-    for _,v in pairs(playerESP) do
-        v:Destroy()
-    end
+    for _,v in pairs(playerESP) do v:Destroy() end
     playerESP = {}
 end
 
@@ -175,97 +172,94 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
-----------------------------------------------------
--- 🧲 FLY PET (MƯỢT FIX)
+-- 🧲 FLY PET (MƯỢT + FIX ĐỨNG IM)
 local function flyToPet(part)
     local char = player.Character
     if not char then return end
-
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
+    noclip = true
+
     local target = part.Position + Vector3.new(0,3,0)
 
-    while true do
+    while part and part.Parent do
         local distance = (hrp.Position - target).Magnitude
-        if distance < 2 then break end
+        if distance < 3 then break end
 
-        local speed = math.clamp(distance / 25, 0.05, 0.15)
-
+        local speed = math.clamp(distance/30, 0.04, 0.12)
         hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), speed)
 
         task.wait(0.03)
     end
 
     hrp.CFrame = CFrame.new(target)
+    noclip = false
 end
 
 --------------------------------------------------
--- ⚡ AUTO NHẶT
+-- ⚡ AUTO NHẶT (SPAM)
 local function autoPickup(part)
-    for _,v in pairs(part:GetDescendants()) do
-        if v:IsA("ProximityPrompt") then
-            v.HoldDuration = 0
-            v.RequiresLineOfSight = false
-            fireproximityprompt(v)
+    for i = 1,5 do
+        for _,v in pairs(part:GetDescendants()) do
+            if v:IsA("ProximityPrompt") then
+                v.HoldDuration = 0
+                v.RequiresLineOfSight = false
+                fireproximityprompt(v)
+            end
         end
+        task.wait(0.2)
     end
 end
 
 --------------------------------------------------
--- 🔍 SCAN (THEO INPUT)
+-- 🔍 SCAN
 local function scanPet()
     local keyword = string.lower(input.Text)
 
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") and not isMyBase(v) then
-            
             if keyword == "" or string.find(string.lower(v.Name), keyword) then
                 local part = v:FindFirstChildWhichIsA("BasePart")
                 if part then
                     return v, part
                 end
             end
-
         end
     end
 end
 
 --------------------------------------------------
--- 🔥 SCAN BUTTON
+-- 🔥 AUTO FARM LOOP
 scanBtn.MouseButton1Click:Connect(function()
-    log.Text = "🔍 SCANNING..."
+    log.Text = "🔥 AUTO FARM..."
 
     task.spawn(function()
-        task.wait(0.3)
+        while true do
+            local pet, part = scanPet()
 
-        local pet, part = scanPet()
+            if pet and part then
+                log.Text = "🔥 "..pet.Name
 
-        if pet and part then
-            log.Text = "🔥 "..pet.Name
+                createESP(pet)
+                flyToPet(part)
+                autoPickup(part)
 
-            createESP(pet)
-            task.wait(0.2)
-
-            flyToPet(part)
-            task.wait(0.3)
-
-            autoPickup(part)
-
-            log.Text = "✅ DONE"
-        else
-            log.Text = "❌ KHÔNG CÓ"
+                task.wait(0.3)
+            else
+                log.Text = "❌ KHÔNG CÓ"
+                task.wait(1)
+            end
         end
     end)
 end)
 
 --------------------------------------------------
--- ESP PLAYER BUTTON
+-- ESP BUTTON
 espBtn.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
-
     if espEnabled then
-        log.Text = "👤 ESP PLAYER ON"
+        log.Text = "👤 ESP ON"
     else
         log.Text = "❌ ESP OFF"
         clearESP()
@@ -273,37 +267,16 @@ espBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- 🔥 HOP SERVER (GIỮ NGUYÊN)
+-- SERVER HOP
 local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-
 function hopNew()
-    local placeId = game.PlaceId
-
-    local s,res = pcall(function()
-        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
-    end)
-
-    if s then
-        local data = HttpService:JSONDecode(res)
-
-        for _,v in pairs(data.data) do
-            if v.playing <= 2 then
-                TeleportService:TeleportToPlaceInstance(placeId,v.id,player)
-                return
-            end
-        end
-    end
-
-    TeleportService:Teleport(placeId)
+    TeleportService:Teleport(game.PlaceId)
 end
 
 --------------------------------------------------
--- ⌨️ KEY K
-local UIS = game:GetService("UserInputService")
-UIS.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.K then
+-- KEY K
+game:GetService("UserInputService").InputBegan:Connect(function(input,gp)
+    if not gp and input.KeyCode == Enum.KeyCode.K then
         gui.Enabled = not gui.Enabled
     end
 end)
