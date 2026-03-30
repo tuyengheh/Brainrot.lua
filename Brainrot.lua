@@ -174,8 +174,7 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- 🧲 FLY PET
-local function flyToPet(part)
+--local function flyToPet(part)
     local char = player.Character
     if not char then return end
 
@@ -184,9 +183,16 @@ local function flyToPet(part)
 
     local target = part.Position + Vector3.new(0,3,0)
 
-    while (hrp.Position - target).Magnitude > 2 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.08)
-        task.wait(0.02)
+    while true do
+        local distance = (hrp.Position - target).Magnitude
+        if distance < 2 then break end
+
+        -- tốc độ theo khoảng cách (xa nhanh, gần chậm)
+        local speed = math.clamp(distance / 25, 0.05, 0.15)
+
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), speed)
+
+        task.wait(0.03) -- giảm load -> mượt hơn
     end
 
     hrp.CFrame = CFrame.new(target)
