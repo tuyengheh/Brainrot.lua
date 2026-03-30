@@ -40,7 +40,7 @@ log.TextColor3 = Color3.new(1,1,1)
 --------------------------------------------------
 -- 🎯 PET LIST
 local targetList = {
-"Kitsune","Yeti","Tiger","egg","Rainbow","cele","Strawberry","Meowl"
+"Fruit","admin","zioles","egg","Rainbow","cele","Strawberry","Meowl"
 }
 
 local function isTarget(name)
@@ -110,11 +110,7 @@ local function flyToSpawn()
 
     hrp.CFrame = spawnCFrame
 end
-
---------------------------------------------------
--- 👁 ESP
-local currentESP = nil
-
+---------------------------------------------------
 local function createESP(obj)
     if currentESP then
         currentESP:Destroy()
@@ -123,8 +119,12 @@ local function createESP(obj)
     local hl = Instance.new("Highlight")
     hl.FillColor = Color3.fromRGB(255,0,0)
     hl.OutlineColor = Color3.fromRGB(255,255,255)
-    hl.FillTransparency = 0.5
-    hl.Parent = obj
+    hl.FillTransparency = 0.4
+    hl.OutlineTransparency = 0
+
+    -- fix: luôn attach đúng
+    hl.Adornee = obj
+    hl.Parent = game.CoreGui
 
     currentESP = hl
 end
@@ -138,12 +138,14 @@ local function flyToPet(part)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    for i = 1,12 do
-        hrp.CFrame = hrp.CFrame:Lerp(part.CFrame + Vector3.new(0,3,0), 0.35)
+    local target = part.Position + Vector3.new(0,3,0)
+
+    while (hrp.Position - target).Magnitude > 2 do
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.08) -- chậm + mượt
         task.wait(0.02)
     end
 
-    hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+    hrp.CFrame = CFrame.new(target)
 end
 
 --------------------------------------------------
