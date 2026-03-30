@@ -2,7 +2,7 @@
 --// PLAYER
 local player = game.Players.LocalPlayer
 
---// GUI (KHÔNG MẤT KHI CHẾT)
+--// GUI
 local gui = Instance.new("ScreenGui")
 gui.Parent = game.CoreGui
 gui.Name = "AUTO_FARM"
@@ -16,14 +16,12 @@ frame.Active = true
 frame.Draggable = true
 Instance.new("UICorner",frame)
 
--- 📱 SCROLL
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
 scroll.CanvasSize = UDim2.new(0,0,0,420)
 scroll.BackgroundTransparency = 1
 scroll.ScrollBarThickness = 4
 
--- UI
 local title = Instance.new("TextLabel",scroll)
 title.Size = UDim2.new(1,0,0,30)
 title.Text = "Premium 🔥"
@@ -39,7 +37,7 @@ log.Text = "READY"
 log.TextScaled = true
 log.TextColor3 = Color3.new(1,1,1)
 
--- INPUT PET
+-- INPUT
 local input = Instance.new("TextBox",scroll)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,75)
@@ -68,14 +66,14 @@ local hopBtn  = btn("SERVER MỚI 🆕",210)
 local espBtn  = btn("PLAYER ESP 👤",255)
 
 --------------------------------------------------
--- ❌ BỎ BASE
+-- BASE CHECK
 local function isMyBase(obj)
     local owner = obj:FindFirstChild("Owner")
     return owner and owner.Value == player
 end
 
 --------------------------------------------------
--- 🚫 NOCLIP
+-- NOCLIP
 local noclip = false
 game:GetService("RunService").Stepped:Connect(function()
     if noclip and player.Character then
@@ -88,7 +86,7 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 --------------------------------------------------
--- 💾 SPAWN
+-- SPAWN
 local spawnCFrame
 local function setSpawn()
     local char = player.Character or player.CharacterAdded:Wait()
@@ -103,7 +101,7 @@ player.CharacterAdded:Connect(function()
 end)
 
 --------------------------------------------------
--- 🚀 FLY SPAWN
+-- FLY SPAWN
 local function flyToSpawn()
     local char = player.Character
     if not char then return end
@@ -118,61 +116,20 @@ local function flyToSpawn()
 end
 
 --------------------------------------------------
--- 👁 ESP PET
-local currentESP = nil
+-- ESP PET
+local currentESP
 local function createESP(obj)
     if currentESP then currentESP:Destroy() end
-
     local hl = Instance.new("Highlight")
     hl.FillColor = Color3.fromRGB(255,0,0)
-    hl.OutlineColor = Color3.fromRGB(255,255,255)
     hl.FillTransparency = 0.4
     hl.Adornee = obj
     hl.Parent = game.CoreGui
-
     currentESP = hl
 end
 
 --------------------------------------------------
--- 👤 ESP PLAYER
-local espEnabled = false
-local playerESP = {}
-
-local function applyESP(plr, char)
-    if not espEnabled or plr == player then return end
-
-    if playerESP[plr] then playerESP[plr]:Destroy() end
-
-    local hl = Instance.new("Highlight")
-    hl.FillColor = Color3.fromRGB(0,170,255)
-    hl.FillTransparency = 0.3
-    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    hl.Adornee = char
-    hl.Parent = game.CoreGui
-
-    playerESP[plr] = hl
-end
-
-local function clearESP()
-    for _,v in pairs(playerESP) do v:Destroy() end
-    playerESP = {}
-end
-
-task.spawn(function()
-    while true do
-        if espEnabled then
-            for _,plr in pairs(game.Players:GetPlayers()) do
-                if plr.Character then
-                    applyESP(plr, plr.Character)
-                end
-            end
-        end
-        task.wait(2)
-    end
-end)
-
---------------------------------------------------
--- 🧲 FLY PET (MƯỢT + FIX ĐỨNG IM)
+-- FLY TO PET (FIX KẸT)
 local function flyToPet(part)
     local char = player.Character
     if not char then return end
@@ -181,26 +138,29 @@ local function flyToPet(part)
 
     noclip = true
 
-    local target = part.Position + Vector3.new(0,3,0)
+    local start = tick()
 
     while part and part.Parent do
-        local distance = (hrp.Position - target).Magnitude
-        if distance < 3 then break end
+        local target = part.Position + Vector3.new(0,3,0)
+        local dist = (hrp.Position - target).Magnitude
 
-        local speed = math.clamp(distance/30, 0.04, 0.12)
+        if dist < 3 then break end
+        if tick() - start > 5 then break end -- chống kẹt
+
+        local speed = math.clamp(dist/30, 0.05, 0.12)
         hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), speed)
 
         task.wait(0.03)
     end
 
-    hrp.CFrame = CFrame.new(target)
     noclip = false
 end
 
 --------------------------------------------------
--- ⚡ AUTO NHẶT (SPAM)
+-- AUTO PICKUP
 local function autoPickup(part)
     for i = 1,5 do
+        if not part or not part.Parent then break end
         for _,v in pairs(part:GetDescendants()) do
             if v:IsA("ProximityPrompt") then
                 v.HoldDuration = 0
@@ -213,7 +173,7 @@ local function autoPickup(part)
 end
 
 --------------------------------------------------
--- 🔍 SCAN
+-- SCAN
 local function scanPet()
     local keyword = string.lower(input.Text)
 
@@ -230,12 +190,21 @@ local function scanPet()
 end
 
 --------------------------------------------------
--- 🔥 AUTO FARM LOOP
+-- AUTO FARM
+local farming = false
+
 scanBtn.MouseButton1Click:Connect(function()
-    log.Text = "🔥 AUTO FARM..."
+    farming = not farming
+
+    if farming then
+        log.Text = "🔥 AUTO FARM ON"
+    else
+        log.Text = "⛔ AUTO FARM OFF"
+        return
+    end
 
     task.spawn(function()
-        while true do
+        while farming do
             local pet, part = scanPet()
 
             if pet and part then
@@ -245,6 +214,12 @@ scanBtn.MouseButton1Click:Connect(function()
                 flyToPet(part)
                 autoPickup(part)
 
+                -- chống kẹt
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame += Vector3.new(0,5,0)
+                end
+
                 task.wait(0.3)
             else
                 log.Text = "❌ KHÔNG CÓ"
@@ -253,25 +228,6 @@ scanBtn.MouseButton1Click:Connect(function()
         end
     end)
 end)
-
---------------------------------------------------
--- ESP BUTTON
-espBtn.MouseButton1Click:Connect(function()
-    espEnabled = not espEnabled
-    if espEnabled then
-        log.Text = "👤 ESP ON"
-    else
-        log.Text = "❌ ESP OFF"
-        clearESP()
-    end
-end)
-
---------------------------------------------------
--- SERVER HOP
-local TeleportService = game:GetService("TeleportService")
-function hopNew()
-    TeleportService:Teleport(game.PlaceId)
-end
 
 --------------------------------------------------
 -- KEY K
@@ -284,6 +240,8 @@ end)
 --------------------------------------------------
 -- CONNECT
 flyBtn.MouseButton1Click:Connect(flyToSpawn)
-hopBtn.MouseButton1Click:Connect(hopNew)
+hopBtn.MouseButton1Click:Connect(function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId)
+end)
 
 log.Text = "READY ✅"
