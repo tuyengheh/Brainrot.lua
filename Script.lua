@@ -11,7 +11,7 @@ gui.Name = "AUTO_FARM"
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,260,0,420)
+frame.Size = UDim2.new(0,260,0,380)
 frame.Position = UDim2.new(0.5,-130,0.4,-130)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
@@ -20,7 +20,7 @@ Instance.new("UICorner",frame)
 
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
-scroll.CanvasSize = UDim2.new(0,0,0,750)
+scroll.CanvasSize = UDim2.new(0,0,0,650)
 scroll.BackgroundTransparency = 1
 
 local title = Instance.new("TextLabel",scroll)
@@ -38,11 +38,11 @@ log.Text = "READY"
 log.TextScaled = true
 log.TextColor3 = Color3.new(1,1,1)
 
--- INPUT PET
+-- INPUT
 local input = Instance.new("TextBox",scroll)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,75)
-input.PlaceholderText = "Nhập tên pet..."
+input.PlaceholderText = "Nhập tên (vd: egg)..."
 
 -- BUTTON
 local function btn(txt,y)
@@ -60,51 +60,8 @@ end
 local flyBtn   = btn("FLY SPAWN 🚀",120)
 local scanBtn  = btn("SCAN + NHẶT 🔍",165)
 local aimBtn   = btn("AIM OFF 🎯",210)
-local espBtn   = btn("ESP OFF 👁",255)
+local espBtn   = btn("ESP NAME 👁",255)
 local hopBtn   = btn("HOP NHANH ⚡",300)
-
---------------------------------------------------
--- ⚡ SPEED INPUT (1-100)
-local speedValue = 16
-
-local speedBox = Instance.new("TextBox", scroll)
-speedBox.Size = UDim2.new(0.8,0,0,35)
-speedBox.Position = UDim2.new(0.1,0,0,345)
-speedBox.PlaceholderText = "Nhập speed (1-100)"
-speedBox.Text = "16"
-speedBox.BackgroundColor3 = Color3.fromRGB(20,20,20)
-speedBox.TextColor3 = Color3.new(1,1,1)
-speedBox.TextScaled = true
-Instance.new("UICorner", speedBox)
-
-local speedBtn = btn("SET SPEED ⚡",390)
-
-speedBtn.MouseButton1Click:Connect(function()
-    local num = tonumber(speedBox.Text)
-
-    if num then
-        num = math.clamp(num,1,100)
-        speedValue = num
-
-        local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = speedValue end
-
-        log.Text = "⚡ SPEED: "..speedValue
-    else
-        log.Text = "❌ SAI SỐ"
-    end
-end)
-
--- giữ speed
-task.spawn(function()
-    while true do
-        local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.WalkSpeed ~= speedValue then
-            hum.WalkSpeed = speedValue
-        end
-        task.wait(0.2)
-    end
-end)
 
 --------------------------------------------------
 -- NOCLIP
@@ -144,24 +101,28 @@ local function flyToSpawn()
 end
 
 --------------------------------------------------
--- SCAN + NHẶT (GIỮ NGUYÊN)
+-- SCAN PET (GẦN)
 local function scanPet()
     local keyword = string.lower(input.Text)
+
     local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not myHRP then return end
 
-    local closest, part, dist = nil, nil, math.huge
+    local closest, part
+    local shortest = math.huge
 
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") then
             local p = v:FindFirstChildWhichIsA("BasePart")
             if p then
-                local d = (myHRP.Position - p.Position).Magnitude
-                if d < 250 and (keyword=="" or string.find(string.lower(v.Name), keyword)) then
-                    if d < dist then
-                        dist = d
-                        closest = v
-                        part = p
+                local dist = (myHRP.Position - p.Position).Magnitude
+                if dist < 200 then
+                    if keyword == "" or string.find(string.lower(v.Name), keyword) then
+                        if dist < shortest then
+                            shortest = dist
+                            closest = v
+                            part = p
+                        end
                     end
                 end
             end
@@ -171,8 +132,11 @@ local function scanPet()
     return closest, part
 end
 
+--------------------------------------------------
+-- AUTO PICKUP
 local function autoPickup(part)
-    for i=1,6 do
+    for i = 1,5 do
+        if not part then break end
         for _,v in pairs(part:GetDescendants()) do
             if v:IsA("ProximityPrompt") then
                 v.HoldDuration = 0
@@ -183,7 +147,11 @@ local function autoPickup(part)
     end
 end
 
+--------------------------------------------------
+-- SCAN BUTTON
 scanBtn.MouseButton1Click:Connect(function()
+    log.Text = "🔍 SCANNING..."
+
     local pet, part = scanPet()
     if pet then
         log.Text = "🔥 "..pet.Name
@@ -210,27 +178,52 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
-task.spawn(function()
-    while true do
-        if aimEnabled and holdingMouse then
-            local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            for _,plr in pairs(game.Players:GetPlayers()) do
-                if plr ~= player and plr.Character then
-                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        camera.CFrame = CFrame.new(camera.CFrame.Position, hrp.Position)
-                        break
-                    end
-                end
+--------------------------------------------------
+-- ESP NAME (🔥 MỚI)
+local espEnabled = false
+local espObjects = {}
+
+local function clearESP()
+    for _,v in pairs(espObjects) do
+        if v then v:Destroy() end
+    end
+    espObjects = {}
+end
+
+local function createESP()
+    clearESP()
+
+    local keyword = string.lower(input.Text)
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") then
+            if keyword ~= "" and string.find(string.lower(v.Name), keyword) then
+                local hl = Instance.new("Highlight")
+                hl.Adornee = v
+                hl.FillColor = Color3.fromRGB(0,255,0)
+                hl.FillTransparency = 0.5
+                hl.OutlineColor = Color3.new(1,1,1)
+                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                hl.Parent = game.CoreGui
+
+                table.insert(espObjects, hl)
             end
         end
-        task.wait(0.02)
     end
-end)
+end
 
-aimBtn.MouseButton1Click:Connect(function()
-    aimEnabled = not aimEnabled
-    aimBtn.Text = aimEnabled and "AIM ON 🎯" or "AIM OFF 🎯"
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+
+    if espEnabled then
+        espBtn.Text = "ESP ON 👁"
+        log.Text = "👁 ESP NAME ON"
+        createESP()
+    else
+        espBtn.Text = "ESP NAME 👁"
+        log.Text = "❌ ESP OFF"
+        clearESP()
+    end
 end)
 
 --------------------------------------------------
@@ -238,24 +231,31 @@ end)
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
-hopBtn.MouseButton1Click:Connect(function()
+local function hopServer()
+    local placeId = game.PlaceId
     local s,res = pcall(function()
-        return game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100")
+        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
     end)
 
     if s then
         local data = HttpService:JSONDecode(res)
         for _,v in pairs(data.data) do
             if v.playing < v.maxPlayers then
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id, player)
-                break
+                TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
+                return
             end
         end
     end
+
+    TeleportService:Teleport(placeId)
+end
+
+hopBtn.MouseButton1Click:Connect(function()
+    hopServer()
 end)
 
 --------------------------------------------------
--- KEY
+-- KEY K
 UIS.InputBegan:Connect(function(i,gp)
     if not gp and i.KeyCode == Enum.KeyCode.K then
         gui.Enabled = not gui.Enabled
