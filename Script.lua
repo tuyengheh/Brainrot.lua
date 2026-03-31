@@ -78,27 +78,51 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 --------------------------------------------------
--- SPAWN
-local spawnCFrame
+-- SPAWN FIX 🔥
+local spawnCFrame = nil
+
 local function setSpawn()
     local char = player.Character or player.CharacterAdded:Wait()
-    spawnCFrame = char:WaitForChild("HumanoidRootPart").CFrame
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    spawnCFrame = hrp.CFrame
+    log.Text = "📍 Đã set spawn"
 end
 
-setSpawn()
-player.CharacterAdded:Connect(function()
-    task.wait(1)
+-- set spawn khi vào game
+task.spawn(function()
+    task.wait(2) -- đợi load nhân vật
     setSpawn()
 end)
 
-local function flyToSpawn()
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp or not spawnCFrame then return end
+-- set lại khi respawn
+player.CharacterAdded:Connect(function(char)
+    task.wait(1)
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    spawnCFrame = hrp.CFrame
+end)
 
-    for i = 1,30 do
-        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame,0.15)
+local function flyToSpawn()
+    local char = player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    if not spawnCFrame then
+        log.Text = "❌ CHƯA SET SPAWN"
+        return
+    end
+
+    noclip = true
+
+    for i = 1,40 do
+        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame,0.1)
         task.wait(0.03)
     end
+
+    noclip = false
+    log.Text = "🚀 Đã về spawn"
 end
 
 --------------------------------------------------
