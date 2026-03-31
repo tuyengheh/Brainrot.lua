@@ -79,24 +79,28 @@ end)
 
 
 ---
-        local function flyToSpawn()
-    local char = player.Character
-    if not char then return end
+        
 
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+    local spawnCFrame
+local function setSpawn()
+    local char = player.Character or player.CharacterAdded:Wait()
+    spawnCFrame = char:WaitForChild("HumanoidRootPart").CFrame
+end
 
-    if not spawnCFrame then
-        log.Text = "❌ CHƯA SET SPAWN"
-        return
+setSpawn()
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    setSpawn()
+end)
+
+local function flyToSpawn()
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp or not spawnCFrame then return end
+
+    for i = 1,30 do
+        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame,0.15)
+        task.wait(0.03)
     end
-
-    log.Text = "🚀 TELEPORT..."
-
-    -- teleport thẳng luôn (100% chạy)
-    hrp.CFrame = CFrame.new(spawnCFrame)
-
-    log.Text = "✅ ĐÃ VỀ SPAWN"
 end
 --------------------------------------------------
 -- FLY TO PET
