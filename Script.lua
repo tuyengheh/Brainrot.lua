@@ -1,5 +1,4 @@
 # Brainrot.lua
- --// PLAYER
 local player = game.Players.LocalPlayer
 
 --// GUI
@@ -144,6 +143,43 @@ local function flyToPet(part)
 
     noclip = false
 end
+
+--------------------------------------------------
+-- AUTO NHẶT NHANH
+local function autoPickup(part)
+    for i = 1,6 do
+        if not part or not part.Parent then break end
+
+        for _,v in pairs(part:GetDescendants()) do
+            if v:IsA("ProximityPrompt") then
+                v.HoldDuration = 0
+                v.RequiresLineOfSight = false
+                fireproximityprompt(v)
+            end
+        end
+
+        task.wait(0.2)
+    end
+end
+
+--------------------------------------------------
+-- SCAN PET
+local function scanPet()
+    local keyword = string.lower(input.Text)
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and not isMyBase(v) then
+            if keyword == "" or string.find(string.lower(v.Name), keyword) then
+                local part = v:FindFirstChildWhichIsA("BasePart")
+                if part then
+                    return v, part
+                end
+            end
+        end
+    end
+end
+
+        
 --------------------------------------------------
 -- 🎯 AIM PLAYER GẦN NHẤT (MƯỢT)
 local aimEnabled = false
@@ -180,13 +216,10 @@ task.spawn(function()
             if target and target.Character then
                 local myChar = player.Character
                 local hrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-
                 local enemyHRP = target.Character:FindFirstChild("HumanoidRootPart")
 
                 if hrp and enemyHRP then
                     local look = CFrame.new(hrp.Position, enemyHRP.Position)
-                    
-                    -- xoay mượt (không giật)
                     hrp.CFrame = hrp.CFrame:Lerp(look, 0.15)
                 end
             end
@@ -197,54 +230,21 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- ⌨️ PHÍM Q BẬT/TẮT AIM
+-- ⌨️ PHÍM U BẬT/TẮT AIM + THÔNG BÁO
 game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
-    if not gp and input.KeyCode == Enum.KeyCode.Q then
+    if gp then return end
+
+    if input.KeyCode == Enum.KeyCode.U then
         aimEnabled = not aimEnabled
 
         if aimEnabled then
-            log.Text = "🎯 AIM ON"
+            log.Text = "🎯 ĐÃ BẬT AIM"
         else
-            log.Text = "❌ AIM OFF"
+            log.Text = "❌ ĐÃ TẮT AIM"
         end
     end
 end)
---------------------------------------------------
--- AUTO NHẶT NHANH
-local function autoPickup(part)
-    for i = 1,6 do
-        if not part or not part.Parent then break end
-
-        for _,v in pairs(part:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then
-                v.HoldDuration = 0
-                v.RequiresLineOfSight = false
-                fireproximityprompt(v)
-            end
-        end
-
-        task.wait(0.2)
-    end
-end
-
---------------------------------------------------
--- SCAN PET
-local function scanPet()
-    local keyword = string.lower(input.Text)
-
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and not isMyBase(v) then
-            if keyword == "" or string.find(string.lower(v.Name), keyword) then
-                local part = v:FindFirstChildWhichIsA("BasePart")
-                if part then
-                    return v, part
-                end
-            end
-        end
-    end
-end
-
---------------------------------------------------
+-----------------------------------------------
 -- SCAN BUTTON (1 LẦN)
 scanBtn.MouseButton1Click:Connect(function()
     log.Text = "🔍 SCANNING..."
