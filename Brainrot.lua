@@ -1,4 +1,3 @@
-
 --// PLAYER
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -58,7 +57,7 @@ local function btn(txt,y)
     return b
 end
 
-local flyBtn   = btn("FLY SPAWN 🚀",120)
+local flyBtn   = btn("TELEPORT SPAWN 🚀",120)
 local scanBtn  = btn("SCAN + NHẶT 🔍",165)
 local aimBtn   = btn("AIM OFF 🎯",210)
 local espBtn   = btn("ESP NAME 👁",255)
@@ -77,14 +76,12 @@ game:GetService("RunService").Stepped:Connect(function()
     end
 end)
 
-
----
-        
-
-    local spawnCFrame
+--------------------------------------------------
+-- SPAWN (TELEPORT)
+local spawnPos
 local function setSpawn()
     local char = player.Character or player.CharacterAdded:Wait()
-    spawnCFrame = char:WaitForChild("HumanoidRootPart").CFrame
+    spawnPos = char:WaitForChild("HumanoidRootPart").Position
 end
 
 setSpawn()
@@ -95,15 +92,14 @@ end)
 
 local function flyToSpawn()
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp or not spawnCFrame then return end
+    if not hrp or not spawnPos then return end
 
-    for i = 1,30 do
-        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame,0.15)
-        task.wait(0.03)
-    end
+    hrp.CFrame = CFrame.new(spawnPos)
+    log.Text = "🚀 TELEPORT SPAWN"
 end
+
 --------------------------------------------------
--- FLY TO PET
+-- FLY TO PET (giữ)
 local function flyToPet(part)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -112,37 +108,28 @@ local function flyToPet(part)
 
     for i = 1,40 do
         if not part then break end
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(part.Position + Vector3.new(0,3,0)),0.1)
-        task.wait(0.03)
+        hrp.CFrame = CFrame.new(part.Position + Vector3.new(0,3,0))
+        task.wait()
     end
 
     noclip = false
 end
 
 --------------------------------------------------
--- SCAN
+-- SCAN (KHÔNG GIỚI HẠN)
 local function scanPet()
     local keyword = string.lower(input.Text)
 
-    local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return end
-
     local closest, part
-    local shortest = math.huge
 
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") then
             local p = v:FindFirstChildWhichIsA("BasePart")
             if p then
-                local dist = (myHRP.Position - p.Position).Magnitude
-                if dist < 1000 then
-                    if keyword == "" or string.find(string.lower(v.Name), keyword) then
-                        if dist < shortest then
-                            shortest = dist
-                            closest = v
-                            part = p
-                        end
-                    end
+                if keyword == "" or string.find(string.lower(v.Name), keyword) then
+                    closest = v
+                    part = p
+                    break
                 end
             end
         end
@@ -183,7 +170,7 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- AIM FULL
+-- AIM (GIỮ NGUYÊN)
 local aimEnabled = false
 local holdingMouse = false
 
@@ -200,21 +187,15 @@ UIS.InputEnded:Connect(function(i)
 end)
 
 local function getClosestPlayer()
-    local closest = nil
-    local shortest = math.huge
-
+    local closest, dist = nil, math.huge
     local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return end
 
     for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local dist = (myHRP.Position - hrp.Position).Magnitude
-                if dist < shortest then
-                    shortest = dist
-                    closest = hrp
-                end
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (myHRP.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then
+                dist = d
+                closest = plr.Character.HumanoidRootPart
             end
         end
     end
@@ -240,7 +221,7 @@ aimBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- ESP NAME
+-- ESP NAME (CHỮ TO)
 local espEnabled = false
 local espObjects = {}
 
@@ -258,13 +239,23 @@ local function createESP()
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") then
             if keyword ~= "" and string.find(string.lower(v.Name), keyword) then
-                local hl = Instance.new("Highlight")
-                hl.Adornee = v
-                hl.FillColor = Color3.fromRGB(0,255,0)
-                hl.FillTransparency = 0.5
-                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                hl.Parent = game.CoreGui
-                table.insert(espObjects, hl)
+                local part = v:FindFirstChildWhichIsA("BasePart")
+                if part then
+                    local bill = Instance.new("BillboardGui", game.CoreGui)
+                    bill.Adornee = part
+                    bill.Size = UDim2.new(0,200,0,50)
+                    bill.AlwaysOnTop = true
+
+                    local txt = Instance.new("TextLabel", bill)
+                    txt.Size = UDim2.new(1,0,1,0)
+                    txt.BackgroundTransparency = 1
+                    txt.Text = v.Name
+                    txt.TextColor3 = Color3.new(0,1,0)
+                    txt.TextScaled = true
+                    txt.Font = Enum.Font.SourceSansBold
+
+                    table.insert(espObjects, bill)
+                end
             end
         end
     end
