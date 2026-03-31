@@ -60,7 +60,7 @@ local flyBtn  = btn("FLY SPAWN 🚀",120)
 local scanBtn = btn("SCAN + NHẶT 🔍",165)
 local aimBtn  = btn("AIM OFF 🎯",210)
 local espBtn  = btn("ESP OFF 👁",255)
-local hopBtn  = btn("HOP NHANH ⚡",300)
+local hopBtn  = btn("HOP NHANH ⚡",300) -- 👈 NÚT MỚI
 
 --------------------------------------------------
 -- CHECK BASE
@@ -83,7 +83,7 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 --------------------------------------------------
--- SPAWN
+-- FLY SPAWN
 local spawnCFrame
 local function setSpawn()
     local char = player.Character or player.CharacterAdded:Wait()
@@ -96,8 +96,6 @@ player.CharacterAdded:Connect(function()
     setSpawn()
 end)
 
---------------------------------------------------
--- FLY SPAWN
 local function flyToSpawn()
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp or not spawnCFrame then return end
@@ -134,7 +132,7 @@ end
 -- AUTO PICKUP
 local function autoPickup(part)
     for i = 1,6 do
-        if not part or not part.Parent then break end
+        if not part then break end
 
         for _,v in pairs(part:GetDescendants()) do
             if v:IsA("ProximityPrompt") then
@@ -164,19 +162,19 @@ local function scanPet()
 end
 
 --------------------------------------------------
--- 🎯 AIM GIỮ CHUỘT
+-- AIM (GIỮ CHUỘT)
 local aimEnabled = false
 local holdingMouse = false
 local UIS = game:GetService("UserInputService")
 
-UIS.InputBegan:Connect(function(input,gp)
-    if not gp and input.UserInputType == Enum.UserInputType.MouseButton1 then
+UIS.InputBegan:Connect(function(i,gp)
+    if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
         holdingMouse = true
     end
 end)
 
-UIS.InputEnded:Connect(function(input,gp)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+UIS.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
         holdingMouse = false
     end
 end)
@@ -218,70 +216,28 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- ESP DÂY
-local espEnabled = false
-local beams = {}
-
-local function clearBeams()
-    for _,b in pairs(beams) do
-        if b then b:Destroy() end
-    end
-    beams = {}
-end
-
-task.spawn(function()
-    while true do
-        if espEnabled and player.Character then
-            clearBeams()
-
-            for _,plr in pairs(game.Players:GetPlayers()) do
-                if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    local att0 = Instance.new("Attachment", player.Character.HumanoidRootPart)
-                    local att1 = Instance.new("Attachment", plr.Character.HumanoidRootPart)
-
-                    local beam = Instance.new("Beam")
-                    beam.Attachment0 = att0
-                    beam.Attachment1 = att1
-                    beam.Width0 = 0.1
-                    beam.Width1 = 0.1
-                    beam.Color = ColorSequence.new(Color3.new(1,0,0))
-                    beam.Parent = game.CoreGui
-
-                    table.insert(beams, beam)
-                end
-            end
-        end
-        task.wait(1)
-    end
-end)
-
---------------------------------------------------
--- ⚡ HOP NHANH
+-- ⚡ HOP SERVER NHANH
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
-local function hopFast()
+local function hopServer()
     local placeId = game.PlaceId
 
-    local success, result = pcall(function()
-        return game:HttpGet(
-            "https://games.roblox.com/v1/games/"..placeId.."/servers/Public?sortOrder=Asc&limit=100"
-        )
+    local s,res = pcall(function()
+        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
     end)
 
-    if success then
-        local data = HttpService:JSONDecode(result)
+    if s then
+        local data = HttpService:JSONDecode(res)
 
-        for _,server in pairs(data.data) do
-            if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                log.Text = "⚡ ĐANG HOP..."
-                TeleportService:TeleportToPlaceInstance(placeId, server.id, player)
+        for _,v in pairs(data.data) do
+            if v.playing < v.maxPlayers then
+                TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
                 return
             end
         end
     end
 
-    log.Text = "⚠️ HOP THƯỜNG"
     TeleportService:Teleport(placeId)
 end
 
@@ -289,7 +245,7 @@ end
 -- BUTTONS
 scanBtn.MouseButton1Click:Connect(function()
     local pet, part = scanPet()
-    if pet and part then
+    if pet then
         log.Text = "🔥 "..pet.Name
         flyToPet(part)
         autoPickup(part)
@@ -306,13 +262,10 @@ aimBtn.MouseButton1Click:Connect(function()
     aimBtn.Text = aimEnabled and "AIM ON 🎯" or "AIM OFF 🎯"
 end)
 
-espBtn.MouseButton1Click:Connect(function()
-    espEnabled = not espEnabled
-    espBtn.Text = espEnabled and "ESP ON 👁" or "ESP OFF 👁"
-    if not espEnabled then clearBeams() end
+hopBtn.MouseButton1Click:Connect(function()
+    log.Text = "⚡ ĐANG HOP..."
+    hopServer()
 end)
-
-hopBtn.MouseButton1Click:Connect(hopFast)
 
 --------------------------------------------------
 -- KEY K
