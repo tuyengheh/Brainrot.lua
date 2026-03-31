@@ -1,4 +1,5 @@
-# Brainrot.lua
+
+# brainrot.lua
 local player = game.Players.LocalPlayer
 
 --// GUI
@@ -115,7 +116,7 @@ local function flyToSpawn()
 end
 
 --------------------------------------------------
--- FLY TO PET (MƯỢT - KHÔNG GIẬT)
+-- FLY PET
 local function flyToPet(part)
     local char = player.Character
     if not char then return end
@@ -124,7 +125,6 @@ local function flyToPet(part)
     if not hrp then return end
 
     noclip = true
-
     local start = tick()
 
     while part and part.Parent do
@@ -132,10 +132,9 @@ local function flyToPet(part)
         local dist = (hrp.Position - target).Magnitude
 
         if dist < 3 then break end
-        if tick() - start > 4 then break end -- chống kẹt
+        if tick() - start > 4 then break end
 
-        local speed = math.clamp(dist/40, 0.04, 0.1) -- bay vừa
-
+        local speed = math.clamp(dist/40, 0.04, 0.1)
         hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), speed)
 
         task.wait(0.03)
@@ -145,7 +144,7 @@ local function flyToPet(part)
 end
 
 --------------------------------------------------
--- AUTO NHẶT NHANH
+-- AUTO NHẶT
 local function autoPickup(part)
     for i = 1,6 do
         if not part or not part.Parent then break end
@@ -179,9 +178,8 @@ local function scanPet()
     end
 end
 
-        
 --------------------------------------------------
--- 🎯 AIM PLAYER GẦN NHẤT (MƯỢT)
+-- 🎯 AIM FIX (CHUẨN)
 local aimEnabled = false
 
 local function getClosestPlayer()
@@ -190,16 +188,17 @@ local function getClosestPlayer()
 
     local myChar = player.Character
     if not myChar then return end
-
     local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return end
 
     for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (myHRP.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-            if dist < shortest then
-                shortest = dist
-                closest = plr
+        if plr ~= player and plr.Character then
+            local enemyHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+            if enemyHRP then
+                local dist = (myHRP.Position - enemyHRP.Position).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    closest = plr
+                end
             end
         end
     end
@@ -207,45 +206,47 @@ local function getClosestPlayer()
     return closest
 end
 
--- AIM LOOP
 task.spawn(function()
     while true do
         if aimEnabled then
             local target = getClosestPlayer()
+            local char = player.Character
 
-            if target and target.Character then
-                local myChar = player.Character
-                local hrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-                local enemyHRP = target.Character:FindFirstChild("HumanoidRootPart")
+            if target and char then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildOfClass("Humanoid")
 
-                if hrp and enemyHRP then
-                    local look = CFrame.new(hrp.Position, enemyHRP.Position)
-                    hrp.CFrame = hrp.CFrame:Lerp(look, 0.15)
+                local enemy = target.Character
+                local targetPart = enemy and (enemy:FindFirstChild("Head") or enemy:FindFirstChild("HumanoidRootPart"))
+
+                if hrp and hum and targetPart then
+                    local look = CFrame.new(hrp.Position, targetPart.Position)
+                    hrp.CFrame = hrp.CFrame:Lerp(look, 0.12)
                 end
             end
         end
-
         task.wait(0.03)
     end
 end)
 
 --------------------------------------------------
--- ⌨️ PHÍM U BẬT/TẮT AIM + THÔNG BÁO
-game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
+-- PHÍM U
+game:GetService("UserInputService").InputBegan:Connect(function(input,gp)
     if gp then return end
 
     if input.KeyCode == Enum.KeyCode.U then
         aimEnabled = not aimEnabled
 
         if aimEnabled then
-            log.Text = "🎯 ĐÃ BẬT AIM"
+            log.Text = "🎯 AIM ĐÃ BẬT"
         else
-            log.Text = "❌ ĐÃ TẮT AIM"
+            log.Text = "❌ AIM ĐÃ TẮT"
         end
     end
 end)
------------------------------------------------
--- SCAN BUTTON (1 LẦN)
+
+--------------------------------------------------
+-- SCAN BUTTON
 scanBtn.MouseButton1Click:Connect(function()
     log.Text = "🔍 SCANNING..."
 
@@ -254,10 +255,8 @@ scanBtn.MouseButton1Click:Connect(function()
 
         if pet and part then
             log.Text = "🔥 "..pet.Name
-
             flyToPet(part)
             autoPickup(part)
-
             log.Text = "✅ DONE"
         else
             log.Text = "❌ KHÔNG CÓ"
