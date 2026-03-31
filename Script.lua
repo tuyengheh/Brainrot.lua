@@ -79,31 +79,8 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 
---------------------------------------------------
--- SPAWN FIX CHUẨN 100%
-local spawnCFrame = nil
-
-local function setSpawn()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-
-    spawnCFrame = hrp.CFrame
-    log.Text = "📍 SET SPAWN OK"
-end
-
--- đợi nhân vật load xong rồi set
-task.spawn(function()
-    repeat task.wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    setSpawn()
-end)
-
--- respawn thì set lại
-player.CharacterAdded:Connect(function(char)
-    repeat task.wait() until char:FindFirstChild("HumanoidRootPart")
-    spawnCFrame = char.HumanoidRootPart.CFrame
-end)
-
-local function flyToSpawn()
+---
+        local function flyToSpawn()
     local char = player.Character
     if not char then return end
 
@@ -115,19 +92,11 @@ local function flyToSpawn()
         return
     end
 
-    noclip = true
-    log.Text = "🚀 ĐANG BAY..."
+    log.Text = "🚀 TELEPORT..."
 
-    -- bay nhanh + mượt hơn
-    for i = 1,60 do
-        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame, 0.2)
-        task.wait()
-    end
+    -- teleport thẳng luôn (100% chạy)
+    hrp.CFrame = CFrame.new(spawnCFrame)
 
-    -- fix lệch
-    hrp.CFrame = spawnCFrame
-
-    noclip = false
     log.Text = "✅ ĐÃ VỀ SPAWN"
 end
 --------------------------------------------------
