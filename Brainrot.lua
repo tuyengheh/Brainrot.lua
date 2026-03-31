@@ -9,7 +9,7 @@ gui.Name = "AUTO_FARM"
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,260,0,300)
+frame.Size = UDim2.new(0,260,0,340)
 frame.Position = UDim2.new(0.5,-130,0.4,-130)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
@@ -18,7 +18,7 @@ Instance.new("UICorner",frame)
 
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
-scroll.CanvasSize = UDim2.new(0,0,0,500)
+scroll.CanvasSize = UDim2.new(0,0,0,550)
 scroll.BackgroundTransparency = 1
 
 local title = Instance.new("TextLabel",scroll)
@@ -59,6 +59,7 @@ local flyBtn  = btn("FLY SPAWN 🚀",120)
 local scanBtn = btn("SCAN + NHẶT 🔍",165)
 local aimBtn  = btn("AIM OFF 🎯",210)
 local espBtn  = btn("ESP OFF 👁",255)
+local hopBtn  = btn("HOP NHANH ⚡",300)
 
 --------------------------------------------------
 -- CHECK BASE
@@ -162,7 +163,7 @@ local function scanPet()
 end
 
 --------------------------------------------------
--- 🎯 AIM (GIỮ CHUỘT MỚI HOẠT ĐỘNG)
+-- 🎯 AIM GIỮ CHUỘT
 local aimEnabled = false
 local holdingMouse = false
 local UIS = game:GetService("UserInputService")
@@ -216,7 +217,7 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- 👁 ESP DÂY (FIX LAG)
+-- ESP DÂY
 local espEnabled = false
 local beams = {}
 
@@ -249,10 +250,39 @@ task.spawn(function()
                 end
             end
         end
-
         task.wait(1)
     end
 end)
+
+--------------------------------------------------
+-- ⚡ HOP NHANH
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local function hopFast()
+    local placeId = game.PlaceId
+
+    local success, result = pcall(function()
+        return game:HttpGet(
+            "https://games.roblox.com/v1/games/"..placeId.."/servers/Public?sortOrder=Asc&limit=100"
+        )
+    end)
+
+    if success then
+        local data = HttpService:JSONDecode(result)
+
+        for _,server in pairs(data.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                log.Text = "⚡ ĐANG HOP..."
+                TeleportService:TeleportToPlaceInstance(placeId, server.id, player)
+                return
+            end
+        end
+    end
+
+    log.Text = "⚠️ HOP THƯỜNG"
+    TeleportService:Teleport(placeId)
+end
 
 --------------------------------------------------
 -- BUTTONS
@@ -280,6 +310,8 @@ espBtn.MouseButton1Click:Connect(function()
     espBtn.Text = espEnabled and "ESP ON 👁" or "ESP OFF 👁"
     if not espEnabled then clearBeams() end
 end)
+
+hopBtn.MouseButton1Click:Connect(hopFast)
 
 --------------------------------------------------
 -- KEY K
