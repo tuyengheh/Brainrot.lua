@@ -1,5 +1,6 @@
 --// PLAYER
 local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
 --// GUI
 local gui = Instance.new("ScreenGui")
@@ -8,8 +9,8 @@ gui.Name = "AUTO_FARM"
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,260,0,260)
-frame.Position = UDim2.new(0.5,-130,0.4,-130)
+frame.Size = UDim2.new(0,260,0,300)
+frame.Position = UDim2.new(0.5,-130,0.4,-150)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 frame.Draggable = true
@@ -17,9 +18,8 @@ Instance.new("UICorner",frame)
 
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
-scroll.CanvasSize = UDim2.new(0,0,0,420)
+scroll.CanvasSize = UDim2.new(0,0,0,500)
 scroll.BackgroundTransparency = 1
-scroll.ScrollBarThickness = 4
 
 local title = Instance.new("TextLabel",scroll)
 title.Size = UDim2.new(1,0,0,30)
@@ -36,7 +36,7 @@ log.Text = "READY"
 log.TextScaled = true
 log.TextColor3 = Color3.new(1,1,1)
 
--- INPUT PET
+-- INPUT
 local input = Instance.new("TextBox",scroll)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,75)
@@ -61,13 +61,7 @@ end
 
 local flyBtn  = btn("FLY SPAWN 🚀",120)
 local scanBtn = btn("SCAN + NHẶT 🔍",165)
-
---------------------------------------------------
--- CHECK BASE
-local function isMyBase(obj)
-    local owner = obj:FindFirstChild("Owner")
-    return owner and owner.Value == player
-end
+local aimBtn  = btn("AIM 🎯 OFF",210)
 
 --------------------------------------------------
 -- NOCLIP
@@ -87,10 +81,8 @@ end)
 local spawnCFrame
 local function setSpawn()
     local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    spawnCFrame = hrp.CFrame
+    spawnCFrame = char:WaitForChild("HumanoidRootPart").CFrame
 end
-
 setSpawn()
 player.CharacterAdded:Connect(function()
     task.wait(1)
@@ -100,27 +92,38 @@ end)
 --------------------------------------------------
 -- FLY SPAWN
 local function flyToSpawn()
-    local char = player.Character
-    if not char then return end
-
-    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp or not spawnCFrame then return end
 
     for i = 1,30 do
         hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame, 0.15)
         task.wait(0.03)
     end
+end
 
-    hrp.CFrame = spawnCFrame
+--------------------------------------------------
+-- SCAN PET
+local function isMyBase(obj)
+    local owner = obj:FindFirstChild("Owner")
+    return owner and owner.Value == player
+end
+
+local function scanPet()
+    local keyword = string.lower(input.Text)
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and not isMyBase(v) then
+            if keyword == "" or string.find(string.lower(v.Name), keyword) then
+                local part = v:FindFirstChildWhichIsA("BasePart")
+                if part then return v, part end
+            end
+        end
+    end
 end
 
 --------------------------------------------------
 -- FLY PET
 local function flyToPet(part)
-    local char = player.Character
-    if not char then return end
-
-    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
     noclip = true
@@ -143,61 +146,36 @@ local function flyToPet(part)
 end
 
 --------------------------------------------------
--- AUTO NHẶT
+-- AUTO PICKUP
 local function autoPickup(part)
     for i = 1,6 do
-        if not part or not part.Parent then break end
-
+        if not part then break end
         for _,v in pairs(part:GetDescendants()) do
             if v:IsA("ProximityPrompt") then
-                v.HoldDuration = 0
-                v.RequiresLineOfSight = false
                 fireproximityprompt(v)
             end
         end
-
         task.wait(0.2)
     end
 end
 
 --------------------------------------------------
--- SCAN PET
-local function scanPet()
-    local keyword = string.lower(input.Text)
-
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and not isMyBase(v) then
-            if keyword == "" or string.find(string.lower(v.Name), keyword) then
-                local part = v:FindFirstChildWhichIsA("BasePart")
-                if part then
-                    return v, part
-                end
-            end
-        end
-    end
-end
-
---------------------------------------------------
--- 🎯 AIM FIX (CHUẨN)
+-- 🎯 AIM + ESP DÂY
 local aimEnabled = false
+local currentBeam
 
 local function getClosestPlayer()
-    local closest = nil
-    local shortest = math.huge
+    local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
 
-    local myChar = player.Character
-    if not myChar then return end
-    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+    local closest,dist = nil,math.huge
 
     for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local enemyHRP = plr.Character:FindFirstChild("HumanoidRootPart")
-            if enemyHRP then
-                local dist = (myHRP.Position - enemyHRP.Position).Magnitude
-                if dist < shortest then
-                    shortest = dist
-                    closest = plr
-                end
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (myHRP.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then
+                dist = d
+                closest = plr
             end
         end
     end
@@ -205,22 +183,38 @@ local function getClosestPlayer()
     return closest
 end
 
+local function createBeam(targetHRP)
+    if currentBeam then currentBeam:Destroy() end
+
+    local att0 = Instance.new("Attachment", player.Character.HumanoidRootPart)
+    local att1 = Instance.new("Attachment", targetHRP)
+
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = att0
+    beam.Attachment1 = att1
+    beam.Width0 = 0.2
+    beam.Width1 = 0.2
+    beam.Parent = att0
+
+    currentBeam = beam
+end
+
 task.spawn(function()
     while true do
         if aimEnabled then
             local target = getClosestPlayer()
-            local char = player.Character
+            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
-            if target and char then
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                local hum = char:FindFirstChildOfClass("Humanoid")
+            if target and target.Character then
+                local enemyHRP = target.Character:FindFirstChild("HumanoidRootPart")
 
-                local enemy = target.Character
-                local targetPart = enemy and (enemy:FindFirstChild("Head") or enemy:FindFirstChild("HumanoidRootPart"))
+                if hrp and enemyHRP then
+                    hrp.CFrame = hrp.CFrame:Lerp(
+                        CFrame.new(hrp.Position, enemyHRP.Position),
+                        0.15
+                    )
 
-                if hrp and hum and targetPart then
-                    local look = CFrame.new(hrp.Position, targetPart.Position)
-                    hrp.CFrame = hrp.CFrame:Lerp(look, 0.12)
+                    createBeam(enemyHRP)
                 end
             end
         end
@@ -229,38 +223,40 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- PHÍM U
+-- AIM TOGGLE
+local function toggleAim()
+    aimEnabled = not aimEnabled
+
+    if aimEnabled then
+        log.Text = "🎯 AIM ON"
+        aimBtn.Text = "AIM 🎯 ON"
+    else
+        log.Text = "❌ AIM OFF"
+        aimBtn.Text = "AIM 🎯 OFF"
+        if currentBeam then currentBeam:Destroy() end
+    end
+end
+
+aimBtn.MouseButton1Click:Connect(toggleAim)
+
 game:GetService("UserInputService").InputBegan:Connect(function(input,gp)
-    if gp then return end
-
-    if input.KeyCode == Enum.KeyCode.U then
-        aimEnabled = not aimEnabled
-
-        if aimEnabled then
-            log.Text = "🎯 AIM ĐÃ BẬT"
-        else
-            log.Text = "❌ AIM ĐÃ TẮT"
-        end
+    if not gp and input.KeyCode == Enum.KeyCode.U then
+        toggleAim()
     end
 end)
 
 --------------------------------------------------
 -- SCAN BUTTON
 scanBtn.MouseButton1Click:Connect(function()
-    log.Text = "🔍 SCANNING..."
-
-    task.spawn(function()
-        local pet, part = scanPet()
-
-        if pet and part then
-            log.Text = "🔥 "..pet.Name
-            flyToPet(part)
-            autoPickup(part)
-            log.Text = "✅ DONE"
-        else
-            log.Text = "❌ KHÔNG CÓ"
-        end
-    end)
+    local pet, part = scanPet()
+    if pet and part then
+        log.Text = "🔥 "..pet.Name
+        flyToPet(part)
+        autoPickup(part)
+        log.Text = "✅ DONE"
+    else
+        log.Text = "❌ KHÔNG CÓ"
+    end
 end)
 
 --------------------------------------------------
