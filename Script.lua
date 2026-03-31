@@ -1,4 +1,5 @@
 # Brainrot.lua
+
 --// PLAYER
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -139,6 +140,110 @@ local function flyToSpawn()
     end
 end
 
+--------------------------------------------------
+-- 🚀 FLY TO PET (MƯỢT)
+local function flyToPet(part)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    noclip = true
+    local start = tick()
+
+    while part and part.Parent do
+        local target = part.Position + Vector3.new(0,3,0)
+        local dist = (hrp.Position - target).Magnitude
+
+        if dist < 3 or tick()-start > 4 then break end
+
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.08)
+        task.wait(0.03)
+    end
+
+    noclip = false
+end
+
+--------------------------------------------------
+-- ⚡ AUTO NHẶT
+local function autoPickup(part)
+    for i = 1,6 do
+        if not part or not part.Parent then break end
+
+        for _,v in pairs(part:GetDescendants()) do
+            if v:IsA("ProximityPrompt") then
+                v.HoldDuration = 0
+                v.RequiresLineOfSight = false
+                fireproximityprompt(v)
+            end
+        end
+
+        task.wait(0.2)
+    end
+end
+
+--------------------------------------------------
+-- 🔍 SCAN PET (PHẠM VI GẦN)
+local function scanPet()
+    local keyword = string.lower(input.Text)
+
+    local myChar = player.Character
+    if not myChar then return end
+
+    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+
+    local closestPet = nil
+    local closestPart = nil
+    local shortest = math.huge
+
+    local MAX_DISTANCE = 250 -- 🔥 chỉnh ở đây
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") then
+
+            local part = v:FindFirstChild("HumanoidRootPart")
+                        or v:FindFirstChild("PrimaryPart")
+                        or v:FindFirstChildWhichIsA("BasePart")
+
+            if part then
+                local dist = (myHRP.Position - part.Position).Magnitude
+
+                if dist <= MAX_DISTANCE then
+                    if keyword == "" or string.find(string.lower(v.Name), keyword) then
+
+                        if dist < shortest then
+                            shortest = dist
+                            closestPet = v
+                            closestPart = part
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return closestPet, closestPart
+end
+
+--------------------------------------------------
+-- 🔘 NÚT SCAN + NHẶT
+scanBtn.MouseButton1Click:Connect(function()
+    log.Text = "🔍 SCANNING..."
+
+    task.spawn(function()
+        local pet, part = scanPet()
+
+        if pet and part then
+            log.Text = "🔥 "..pet.Name
+
+            flyToPet(part)
+            autoPickup(part)
+
+            log.Text = "✅ DONE"
+        else
+            log.Text = "❌ KHÔNG CÓ"
+        end
+    end)
+end)
 --------------------------------------------------
 -- AIM (GIỮ CHUỘT)
 local aimEnabled = false
