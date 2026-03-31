@@ -216,65 +216,78 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- 👁 ESP DÂY (MÀU THEO KHOẢNG CÁCH)
+--
+
+--------------------------------------------------
+-- 👁 ESP DÂY SIÊU ỔN (FIX FULL)
 local espEnabled = false
 local beams = {}
 
+local RunService = game:GetService("RunService")
+
 local function clearBeams()
     for _,v in pairs(beams) do
-        if v.beam then v.beam:Destroy() end
-        if v.att0 then v.att0:Destroy() end
-        if v.att1 then v.att1:Destroy() end
+        if v then v:Destroy() end
     end
     beams = {}
 end
 
-local function getColor(distance)
-    local max = 200
-    local ratio = math.clamp(distance/max,0,1)
+local function createBeam(myHRP, enemyHRP)
+    local att0 = Instance.new("Attachment")
+    att0.Parent = myHRP
 
-    return Color3.new(ratio, 1-ratio, 0)
-end
-
-local function createBeam(plr)
-    if not player.Character then return end
-    if plr == player then return end
-    if not plr.Character then return end
-
-    local myHRP = player.Character:FindFirstChild("HumanoidRootPart")
-    local enemyHRP = plr.Character:FindFirstChild("HumanoidRootPart")
-
-    if not myHRP or not enemyHRP then return end
-
-    local dist = (myHRP.Position - enemyHRP.Position).Magnitude
-
-    local att0 = Instance.new("Attachment", myHRP)
-    local att1 = Instance.new("Attachment", enemyHRP)
+    local att1 = Instance.new("Attachment")
+    att1.Parent = enemyHRP
 
     local beam = Instance.new("Beam")
     beam.Attachment0 = att0
     beam.Attachment1 = att1
-    beam.Width0 = 0.12
-    beam.Width1 = 0.12
-    beam.Color = ColorSequence.new(getColor(dist))
+    beam.Width0 = 0.15
+    beam.Width1 = 0.15
     beam.FaceCamera = true
-    beam.Parent = game.CoreGui
+    beam.Color = ColorSequence.new(Color3.fromRGB(255,0,0))
+    beam.Parent = workspace -- 👈 QUAN TRỌNG (KHÔNG dùng CoreGui)
 
-    table.insert(beams, {beam=beam,att0=att0,att1=att1})
+    table.insert(beams, beam)
 end
 
-task.spawn(function()
-    while true do
-        if espEnabled then
-            clearBeams()
-            for _,plr in pairs(game.Players:GetPlayers()) do
-                createBeam(plr)
+-- LOOP CHẠY LIÊN TỤC
+RunService.RenderStepped:Connect(function()
+    if not espEnabled then return end
+
+    local myChar = player.Character
+    if not myChar then return end
+
+    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+
+    clearBeams()
+
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            local enemyHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+
+            if enemyHRP then
+                createBeam(myHRP, enemyHRP)
             end
         end
-        task.wait(1)
     end
 end)
 
+--------------------------------------------------
+-- BUTTON ESP FIX
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+
+    if espEnabled then
+        espBtn.Text = "ESP ON 👁"
+        log.Text = "👁 ESP ON"
+    else
+        espBtn.Text = "ESP OFF 👁"
+        log.Text = "❌ ESP OFF"
+        clearBeams()
+    end
+end)
 --------------------------------------------------
 -- HOP SERVER
 local TeleportService = game:GetService("TeleportService")
