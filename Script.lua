@@ -1,5 +1,4 @@
 # Brainrot.lua
-
 --// PLAYER
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -12,7 +11,7 @@ gui.Name = "AUTO_FARM"
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,260,0,380)
+frame.Size = UDim2.new(0,260,0,420)
 frame.Position = UDim2.new(0.5,-130,0.4,-130)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
@@ -21,7 +20,7 @@ Instance.new("UICorner",frame)
 
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Size = UDim2.new(1,0,1,0)
-scroll.CanvasSize = UDim2.new(0,0,0,650)
+scroll.CanvasSize = UDim2.new(0,0,0,750)
 scroll.BackgroundTransparency = 1
 
 local title = Instance.new("TextLabel",scroll)
@@ -39,7 +38,7 @@ log.Text = "READY"
 log.TextScaled = true
 log.TextColor3 = Color3.new(1,1,1)
 
--- INPUT
+-- INPUT PET
 local input = Instance.new("TextBox",scroll)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,75)
@@ -63,46 +62,50 @@ local scanBtn  = btn("SCAN + NHẶT 🔍",165)
 local aimBtn   = btn("AIM OFF 🎯",210)
 local espBtn   = btn("ESP OFF 👁",255)
 local hopBtn   = btn("HOP NHANH ⚡",300)
-local crazyBtn = btn("CRAZY MODE 💀",345) -- 👈 NÚT MỚI
 
 --------------------------------------------------
--- 💀 CRAZY MODE (FAKE LAG + XOAY ĐIÊN)
-local crazyEnabled = false
+-- ⚡ SPEED INPUT (1-100)
+local speedValue = 16
 
+local speedBox = Instance.new("TextBox", scroll)
+speedBox.Size = UDim2.new(0.8,0,0,35)
+speedBox.Position = UDim2.new(0.1,0,0,345)
+speedBox.PlaceholderText = "Nhập speed (1-100)"
+speedBox.Text = "16"
+speedBox.BackgroundColor3 = Color3.fromRGB(20,20,20)
+speedBox.TextColor3 = Color3.new(1,1,1)
+speedBox.TextScaled = true
+Instance.new("UICorner", speedBox)
+
+local speedBtn = btn("SET SPEED ⚡",390)
+
+speedBtn.MouseButton1Click:Connect(function()
+    local num = tonumber(speedBox.Text)
+
+    if num then
+        num = math.clamp(num,1,100)
+        speedValue = num
+
+        local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = speedValue end
+
+        log.Text = "⚡ SPEED: "..speedValue
+    else
+        log.Text = "❌ SAI SỐ"
+    end
+end)
+
+-- giữ speed
 task.spawn(function()
     while true do
-        if crazyEnabled and player.Character then
-            local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                -- xoay điên
-                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(math.random(30,120)), 0)
-
-                -- giật nhẹ (fake lag)
-                hrp.CFrame = hrp.CFrame + Vector3.new(
-                    math.random(-2,2)/5,
-                    math.random(-1,1)/5,
-                    math.random(-2,2)/5
-                )
-            end
+        local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if hum and hum.WalkSpeed ~= speedValue then
+            hum.WalkSpeed = speedValue
         end
-        task.wait(0.05)
+        task.wait(0.2)
     end
 end)
 
-crazyBtn.MouseButton1Click:Connect(function()
-    crazyEnabled = not crazyEnabled
-
-    if crazyEnabled then
-        crazyBtn.Text = "CRAZY ON 💀"
-        log.Text = "💀 FAKE LAG ON"
-    else
-        crazyBtn.Text = "CRAZY MODE 💀"
-        log.Text = "❌ CRAZY OFF"
-    end
-end)
-
------------------------------------------------
--- (GIỮ NGUYÊN TOÀN BỘ CODE CŨ CỦA BẠN BÊN DƯỚI)
 --------------------------------------------------
 -- NOCLIP
 local noclip = false
@@ -141,111 +144,57 @@ local function flyToSpawn()
 end
 
 --------------------------------------------------
--- 🚀 FLY TO PET (MƯỢT)
-local function flyToPet(part)
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    noclip = true
-    local start = tick()
-
-    while part and part.Parent do
-        local target = part.Position + Vector3.new(0,3,0)
-        local dist = (hrp.Position - target).Magnitude
-
-        if dist < 3 or tick()-start > 4 then break end
-
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.08)
-        task.wait(0.03)
-    end
-
-    noclip = false
-end
-
---------------------------------------------------
--- ⚡ AUTO NHẶT
-local function autoPickup(part)
-    for i = 1,6 do
-        if not part or not part.Parent then break end
-
-        for _,v in pairs(part:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then
-                v.HoldDuration = 0
-                v.RequiresLineOfSight = false
-                fireproximityprompt(v)
-            end
-        end
-
-        task.wait(0.2)
-    end
-end
-
---------------------------------------------------
--- 🔍 SCAN PET (PHẠM VI GẦN)
+-- SCAN + NHẶT (GIỮ NGUYÊN)
 local function scanPet()
     local keyword = string.lower(input.Text)
-
-    local myChar = player.Character
-    if not myChar then return end
-
-    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+    local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not myHRP then return end
 
-    local closestPet = nil
-    local closestPart = nil
-    local shortest = math.huge
-
-    local MAX_DISTANCE = 250 -- 🔥 chỉnh ở đây
+    local closest, part, dist = nil, nil, math.huge
 
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") then
-
-            local part = v:FindFirstChild("HumanoidRootPart")
-                        or v:FindFirstChild("PrimaryPart")
-                        or v:FindFirstChildWhichIsA("BasePart")
-
-            if part then
-                local dist = (myHRP.Position - part.Position).Magnitude
-
-                if dist <= MAX_DISTANCE then
-                    if keyword == "" or string.find(string.lower(v.Name), keyword) then
-
-                        if dist < shortest then
-                            shortest = dist
-                            closestPet = v
-                            closestPart = part
-                        end
+            local p = v:FindFirstChildWhichIsA("BasePart")
+            if p then
+                local d = (myHRP.Position - p.Position).Magnitude
+                if d < 250 and (keyword=="" or string.find(string.lower(v.Name), keyword)) then
+                    if d < dist then
+                        dist = d
+                        closest = v
+                        part = p
                     end
                 end
             end
         end
     end
 
-    return closestPet, closestPart
+    return closest, part
 end
 
---------------------------------------------------
--- 🔘 NÚT SCAN + NHẶT
-scanBtn.MouseButton1Click:Connect(function()
-    log.Text = "🔍 SCANNING..."
-
-    task.spawn(function()
-        local pet, part = scanPet()
-
-        if pet and part then
-            log.Text = "🔥 "..pet.Name
-
-            flyToPet(part)
-            autoPickup(part)
-
-            log.Text = "✅ DONE"
-        else
-            log.Text = "❌ KHÔNG CÓ"
+local function autoPickup(part)
+    for i=1,6 do
+        for _,v in pairs(part:GetDescendants()) do
+            if v:IsA("ProximityPrompt") then
+                v.HoldDuration = 0
+                fireproximityprompt(v)
+            end
         end
-    end)
+        task.wait(0.2)
+    end
+end
+
+scanBtn.MouseButton1Click:Connect(function()
+    local pet, part = scanPet()
+    if pet then
+        log.Text = "🔥 "..pet.Name
+        autoPickup(part)
+    else
+        log.Text = "❌ KHÔNG CÓ"
+    end
 end)
+
 --------------------------------------------------
--- AIM (GIỮ CHUỘT)
+-- AIM
 local aimEnabled = false
 local holdingMouse = false
 
@@ -261,35 +210,17 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
-local function getClosestPlayer()
-    local closest,dist = nil,math.huge
-    local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return end
-
-    for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local d = (myHRP.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-            if d < dist then
-                dist = d
-                closest = plr
-            end
-        end
-    end
-
-    return closest
-end
-
 task.spawn(function()
     while true do
         if aimEnabled and holdingMouse then
-            local target = getClosestPlayer()
-            if target and target.Character then
-                local hrp = target.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    camera.CFrame = camera.CFrame:Lerp(
-                        CFrame.new(camera.CFrame.Position, hrp.Position),
-                        0.25
-                    )
+            local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            for _,plr in pairs(game.Players:GetPlayers()) do
+                if plr ~= player and plr.Character then
+                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        camera.CFrame = CFrame.new(camera.CFrame.Position, hrp.Position)
+                        break
+                    end
                 end
             end
         end
@@ -297,109 +228,34 @@ task.spawn(function()
     end
 end)
 
---------------------------------------------------
--- 🟩 ESP BOX (FIX FULL)
-local espEnabled = false
-local highlights = {}
-
-local function clearESP()
-    for _,v in pairs(highlights) do
-        if v then v:Destroy() end
-    end
-    highlights = {}
-end
-
-local function getColor(dist)
-    local max = 200
-    local ratio = math.clamp(dist/max,0,1)
-    return Color3.new(ratio, 1-ratio, 0)
-end
-
-task.spawn(function()
-    while true do
-        if espEnabled then
-            clearESP()
-
-            local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-
-            for _,plr in pairs(game.Players:GetPlayers()) do
-                if plr ~= player and plr.Character and myHRP then
-                    local enemyHRP = plr.Character:FindFirstChild("HumanoidRootPart")
-                    if enemyHRP then
-                        local dist = (myHRP.Position - enemyHRP.Position).Magnitude
-
-                        local hl = Instance.new("Highlight")
-                        hl.Adornee = plr.Character
-                        hl.FillColor = getColor(dist)
-                        hl.FillTransparency = 0.5
-                        hl.OutlineColor = Color3.new(1,1,1)
-                        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        hl.Parent = game.CoreGui
-
-                        table.insert(highlights, hl)
-                    end
-                end
-            end
-        end
-
-        task.wait(0.5)
-    end
+aimBtn.MouseButton1Click:Connect(function()
+    aimEnabled = not aimEnabled
+    aimBtn.Text = aimEnabled and "AIM ON 🎯" or "AIM OFF 🎯"
 end)
 
 --------------------------------------------------
--- ⚡ HOP SERVER
+-- HOP SERVER
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
-local function hopServer()
-    local placeId = game.PlaceId
-
+hopBtn.MouseButton1Click:Connect(function()
     local s,res = pcall(function()
-        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
+        return game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100")
     end)
 
     if s then
         local data = HttpService:JSONDecode(res)
         for _,v in pairs(data.data) do
             if v.playing < v.maxPlayers then
-                TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
-                return
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id, player)
+                break
             end
         end
     end
-
-    TeleportService:Teleport(placeId)
-end
-
---------------------------------------------------
--- BUTTONS
-flyBtn.MouseButton1Click:Connect(flyToSpawn)
-
-aimBtn.MouseButton1Click:Connect(function()
-    aimEnabled = not aimEnabled
-    aimBtn.Text = aimEnabled and "AIM ON 🎯" or "AIM OFF 🎯"
-end)
-
-espBtn.MouseButton1Click:Connect(function()
-    espEnabled = not espEnabled
-
-    if espEnabled then
-        espBtn.Text = "ESP ON 👁"
-        log.Text = "👁 ESP ON"
-    else
-        espBtn.Text = "ESP OFF 👁"
-        log.Text = "❌ ESP OFF"
-        clearESP()
-    end
-end)
-
-hopBtn.MouseButton1Click:Connect(function()
-    log.Text = "⚡ ĐANG HOP..."
-    hopServer()
 end)
 
 --------------------------------------------------
--- KEY K
+-- KEY
 UIS.InputBegan:Connect(function(i,gp)
     if not gp and i.KeyCode == Enum.KeyCode.K then
         gui.Enabled = not gui.Enabled
