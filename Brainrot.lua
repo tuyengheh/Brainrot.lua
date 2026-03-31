@@ -1,4 +1,3 @@
-
 --// PLAYER
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -9,6 +8,7 @@ local gui = Instance.new("ScreenGui")
 gui.Parent = game.CoreGui
 gui.Name = "AUTO_FARM"
 gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0,260,0,380)
@@ -101,7 +101,24 @@ local function flyToSpawn()
 end
 
 --------------------------------------------------
--- SCAN PET (GẦN)
+-- FLY TO PET
+local function flyToPet(part)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    noclip = true
+
+    for i = 1,40 do
+        if not part then break end
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(part.Position + Vector3.new(0,3,0)),0.1)
+        task.wait(0.03)
+    end
+
+    noclip = false
+end
+
+--------------------------------------------------
+-- SCAN
 local function scanPet()
     local keyword = string.lower(input.Text)
 
@@ -116,7 +133,7 @@ local function scanPet()
             local p = v:FindFirstChildWhichIsA("BasePart")
             if p then
                 local dist = (myHRP.Position - p.Position).Magnitude
-                if dist < 200 then
+                if dist < 1000 then
                     if keyword == "" or string.find(string.lower(v.Name), keyword) then
                         if dist < shortest then
                             shortest = dist
@@ -143,30 +160,31 @@ local function autoPickup(part)
                 fireproximityprompt(v)
             end
         end
-        task.wait(0.2)
+        task.wait(0.3)
     end
 end
 
 --------------------------------------------------
 -- SCAN BUTTON
 scanBtn.MouseButton1Click:Connect(function()
-    log.Text = "🔍 SCANNING..."
+    log.Text = "🔍 Đang check..."
 
     local pet, part = scanPet()
     if pet then
         log.Text = "🔥 "..pet.Name
+        flyToPet(part)
         autoPickup(part)
+        log.Text = "✅ Thành công"
     else
         log.Text = "❌ KHÔNG CÓ"
     end
 end)
 
 --------------------------------------------------
--- AIM FULL FIX 🔥
+-- AIM FULL
 local aimEnabled = false
 local holdingMouse = false
 
--- bắt giữ chuột
 UIS.InputBegan:Connect(function(i,gp)
     if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
         holdingMouse = true
@@ -179,15 +197,11 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
--- tìm player gần nhất
 local function getClosestPlayer()
     local closest = nil
     local shortest = math.huge
 
-    local myChar = player.Character
-    if not myChar then return end
-
-    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+    local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not myHRP then return end
 
     for _,plr in pairs(game.Players:GetPlayers()) do
@@ -206,37 +220,25 @@ local function getClosestPlayer()
     return closest
 end
 
--- loop aim
 task.spawn(function()
     while true do
         if aimEnabled and holdingMouse then
             local target = getClosestPlayer()
             if target then
-                camera.CFrame = CFrame.new(
-                    camera.CFrame.Position,
-                    target.Position
-                )
+                camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
             end
         end
         task.wait(0.02)
     end
 end)
 
--- nút bật tắt AIM
 aimBtn.MouseButton1Click:Connect(function()
     aimEnabled = not aimEnabled
-
-    if aimEnabled then
-        aimBtn.Text = "AIM ON 🎯"
-        log.Text = "🎯 AIM ON"
-    else
-        aimBtn.Text = "AIM OFF 🎯"
-        log.Text = "❌ AIM OFF"
-    end
+    aimBtn.Text = aimEnabled and "AIM ON 🎯" or "AIM OFF 🎯"
 end)
 
 --------------------------------------------------
--- ESP NAME (🔥 MỚI)
+-- ESP NAME
 local espEnabled = false
 local espObjects = {}
 
@@ -249,7 +251,6 @@ end
 
 local function createESP()
     clearESP()
-
     local keyword = string.lower(input.Text)
 
     for _,v in pairs(workspace:GetDescendants()) do
@@ -259,10 +260,8 @@ local function createESP()
                 hl.Adornee = v
                 hl.FillColor = Color3.fromRGB(0,255,0)
                 hl.FillTransparency = 0.5
-                hl.OutlineColor = Color3.new(1,1,1)
                 hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                 hl.Parent = game.CoreGui
-
                 table.insert(espObjects, hl)
             end
         end
@@ -271,44 +270,20 @@ end
 
 espBtn.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
-
     if espEnabled then
         espBtn.Text = "ESP ON 👁"
-        log.Text = "👁 ESP NAME ON"
         createESP()
     else
         espBtn.Text = "ESP NAME 👁"
-        log.Text = "❌ ESP OFF"
         clearESP()
     end
 end)
 
 --------------------------------------------------
--- HOP SERVER
+-- HOP
 local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-
-local function hopServer()
-    local placeId = game.PlaceId
-    local s,res = pcall(function()
-        return game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
-    end)
-
-    if s then
-        local data = HttpService:JSONDecode(res)
-        for _,v in pairs(data.data) do
-            if v.playing < v.maxPlayers then
-                TeleportService:TeleportToPlaceInstance(placeId, v.id, player)
-                return
-            end
-        end
-    end
-
-    TeleportService:Teleport(placeId)
-end
-
 hopBtn.MouseButton1Click:Connect(function()
-    hopServer()
+    TeleportService:Teleport(game.PlaceId)
 end)
 
 --------------------------------------------------
