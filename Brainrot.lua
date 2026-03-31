@@ -77,8 +77,9 @@ game:GetService("RunService").Stepped:Connect(function()
     end
 end)
 
+
 --------------------------------------------------
--- SPAWN FIX 🔥
+-- SPAWN FIX CHUẨN 100%
 local spawnCFrame = nil
 
 local function setSpawn()
@@ -86,20 +87,19 @@ local function setSpawn()
     local hrp = char:WaitForChild("HumanoidRootPart")
 
     spawnCFrame = hrp.CFrame
-    log.Text = "📍 Đã set spawn"
+    log.Text = "📍 SET SPAWN OK"
 end
 
--- set spawn khi vào game
+-- đợi nhân vật load xong rồi set
 task.spawn(function()
-    task.wait(2) -- đợi load nhân vật
+    repeat task.wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     setSpawn()
 end)
 
--- set lại khi respawn
+-- respawn thì set lại
 player.CharacterAdded:Connect(function(char)
-    task.wait(1)
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    spawnCFrame = hrp.CFrame
+    repeat task.wait() until char:FindFirstChild("HumanoidRootPart")
+    spawnCFrame = char.HumanoidRootPart.CFrame
 end)
 
 local function flyToSpawn()
@@ -115,16 +115,20 @@ local function flyToSpawn()
     end
 
     noclip = true
+    log.Text = "🚀 ĐANG BAY..."
 
-    for i = 1,40 do
-        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame,0.1)
-        task.wait(0.03)
+    -- bay nhanh + mượt hơn
+    for i = 1,60 do
+        hrp.CFrame = hrp.CFrame:Lerp(spawnCFrame, 0.2)
+        task.wait()
     end
 
-    noclip = false
-    log.Text = "🚀 Đã về spawn"
-end
+    -- fix lệch
+    hrp.CFrame = spawnCFrame
 
+    noclip = false
+    log.Text = "✅ ĐÃ VỀ SPAWN"
+end
 --------------------------------------------------
 -- FLY TO PET
 local function flyToPet(part)
