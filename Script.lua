@@ -60,7 +60,7 @@ local flyBtn  = btn("FLY SPAWN 🚀",120)
 local scanBtn = btn("SCAN + NHẶT 🔍",165)
 local aimBtn  = btn("AIM OFF 🎯",210)
 local espBtn  = btn("ESP OFF 👁",255)
-local hopBtn  = btn("HOP NHANH ⚡",300) -- 👈 NÚT MỚI
+local hopBtn  = btn("HOP NHANH ⚡",300)
 
 --------------------------------------------------
 -- CHECK BASE
@@ -162,7 +162,7 @@ local function scanPet()
 end
 
 --------------------------------------------------
--- AIM (GIỮ CHUỘT)
+-- AIM
 local aimEnabled = false
 local holdingMouse = false
 local UIS = game:GetService("UserInputService")
@@ -216,7 +216,67 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- ⚡ HOP SERVER NHANH
+-- 👁 ESP DÂY (MÀU THEO KHOẢNG CÁCH)
+local espEnabled = false
+local beams = {}
+
+local function clearBeams()
+    for _,v in pairs(beams) do
+        if v.beam then v.beam:Destroy() end
+        if v.att0 then v.att0:Destroy() end
+        if v.att1 then v.att1:Destroy() end
+    end
+    beams = {}
+end
+
+local function getColor(distance)
+    local max = 200
+    local ratio = math.clamp(distance/max,0,1)
+
+    return Color3.new(ratio, 1-ratio, 0)
+end
+
+local function createBeam(plr)
+    if not player.Character then return end
+    if plr == player then return end
+    if not plr.Character then return end
+
+    local myHRP = player.Character:FindFirstChild("HumanoidRootPart")
+    local enemyHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+
+    if not myHRP or not enemyHRP then return end
+
+    local dist = (myHRP.Position - enemyHRP.Position).Magnitude
+
+    local att0 = Instance.new("Attachment", myHRP)
+    local att1 = Instance.new("Attachment", enemyHRP)
+
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = att0
+    beam.Attachment1 = att1
+    beam.Width0 = 0.12
+    beam.Width1 = 0.12
+    beam.Color = ColorSequence.new(getColor(dist))
+    beam.FaceCamera = true
+    beam.Parent = game.CoreGui
+
+    table.insert(beams, {beam=beam,att0=att0,att1=att1})
+end
+
+task.spawn(function()
+    while true do
+        if espEnabled then
+            clearBeams()
+            for _,plr in pairs(game.Players:GetPlayers()) do
+                createBeam(plr)
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+--------------------------------------------------
+-- HOP SERVER
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
@@ -260,6 +320,12 @@ flyBtn.MouseButton1Click:Connect(flyToSpawn)
 aimBtn.MouseButton1Click:Connect(function()
     aimEnabled = not aimEnabled
     aimBtn.Text = aimEnabled and "AIM ON 🎯" or "AIM OFF 🎯"
+end)
+
+espBtn.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    espBtn.Text = espEnabled and "ESP ON 👁" or "ESP OFF 👁"
+    if not espEnabled then clearBeams() end
 end)
 
 hopBtn.MouseButton1Click:Connect(function()
