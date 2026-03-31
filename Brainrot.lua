@@ -178,6 +178,8 @@ local function scanPet()
         end
     end
 end
+
+        
 --------------------------------------------------
 -- 🎯 AIM PLAYER GẦN NHẤT (MƯỢT)
 local aimEnabled = false
@@ -214,13 +216,10 @@ task.spawn(function()
             if target and target.Character then
                 local myChar = player.Character
                 local hrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-
                 local enemyHRP = target.Character:FindFirstChild("HumanoidRootPart")
 
                 if hrp and enemyHRP then
                     local look = CFrame.new(hrp.Position, enemyHRP.Position)
-                    
-                    -- xoay mượt (không giật)
                     hrp.CFrame = hrp.CFrame:Lerp(look, 0.15)
                 end
             end
@@ -231,19 +230,21 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- ⌨️ PHÍM Q BẬT/TẮT AIM
+-- ⌨️ PHÍM U BẬT/TẮT AIM + THÔNG BÁO
 game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
-    if not gp and input.KeyCode == Enum.KeyCode.Q then
+    if gp then return end
+
+    if input.KeyCode == Enum.KeyCode.U then
         aimEnabled = not aimEnabled
 
         if aimEnabled then
-            log.Text = "🎯 AIM ON"
+            log.Text = "🎯 ĐÃ BẬT AIM"
         else
-            log.Text = "❌ AIM OFF"
+            log.Text = "❌ ĐÃ TẮT AIM"
         end
     end
 end)
---------------------------------------------------
+-----------------------------------------------
 -- SCAN BUTTON (1 LẦN)
 scanBtn.MouseButton1Click:Connect(function()
     log.Text = "🔍 SCANNING..."
