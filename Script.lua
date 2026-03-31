@@ -144,7 +144,71 @@ local function flyToPet(part)
 
     noclip = false
 end
+--------------------------------------------------
+-- 🎯 AIM PLAYER GẦN NHẤT (MƯỢT)
+local aimEnabled = false
 
+local function getClosestPlayer()
+    local closest = nil
+    local shortest = math.huge
+
+    local myChar = player.Character
+    if not myChar then return end
+
+    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (myHRP.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+            if dist < shortest then
+                shortest = dist
+                closest = plr
+            end
+        end
+    end
+
+    return closest
+end
+
+-- AIM LOOP
+task.spawn(function()
+    while true do
+        if aimEnabled then
+            local target = getClosestPlayer()
+
+            if target and target.Character then
+                local myChar = player.Character
+                local hrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+
+                local enemyHRP = target.Character:FindFirstChild("HumanoidRootPart")
+
+                if hrp and enemyHRP then
+                    local look = CFrame.new(hrp.Position, enemyHRP.Position)
+                    
+                    -- xoay mượt (không giật)
+                    hrp.CFrame = hrp.CFrame:Lerp(look, 0.15)
+                end
+            end
+        end
+
+        task.wait(0.03)
+    end
+end)
+
+--------------------------------------------------
+-- ⌨️ PHÍM Q BẬT/TẮT AIM
+game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
+    if not gp and input.KeyCode == Enum.KeyCode.Q then
+        aimEnabled = not aimEnabled
+
+        if aimEnabled then
+            log.Text = "🎯 AIM ON"
+        else
+            log.Text = "❌ AIM OFF"
+        end
+    end
+end)
 --------------------------------------------------
 -- AUTO NHẶT NHANH
 local function autoPickup(part)
