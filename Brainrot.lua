@@ -1,3 +1,4 @@
+
 --// PLAYER
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -161,10 +162,11 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- AIM
+-- AIM FULL FIX 🔥
 local aimEnabled = false
 local holdingMouse = false
 
+-- bắt giữ chuột
 UIS.InputBegan:Connect(function(i,gp)
     if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
         holdingMouse = true
@@ -174,6 +176,62 @@ end)
 UIS.InputEnded:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 then
         holdingMouse = false
+    end
+end)
+
+-- tìm player gần nhất
+local function getClosestPlayer()
+    local closest = nil
+    local shortest = math.huge
+
+    local myChar = player.Character
+    if not myChar then return end
+
+    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local dist = (myHRP.Position - hrp.Position).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    closest = hrp
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+-- loop aim
+task.spawn(function()
+    while true do
+        if aimEnabled and holdingMouse then
+            local target = getClosestPlayer()
+            if target then
+                camera.CFrame = CFrame.new(
+                    camera.CFrame.Position,
+                    target.Position
+                )
+            end
+        end
+        task.wait(0.02)
+    end
+end)
+
+-- nút bật tắt AIM
+aimBtn.MouseButton1Click:Connect(function()
+    aimEnabled = not aimEnabled
+
+    if aimEnabled then
+        aimBtn.Text = "AIM ON 🎯"
+        log.Text = "🎯 AIM ON"
+    else
+        aimBtn.Text = "AIM OFF 🎯"
+        log.Text = "❌ AIM OFF"
     end
 end)
 
