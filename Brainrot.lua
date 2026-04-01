@@ -7,7 +7,7 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 
 --------------------------------------------------
--- GUI ROOT (FIX QUAN TRỌNG)
+-- GUI ROOT
 local gui = Instance.new("ScreenGui")
 gui.Name = "BRAINROT_UI"
 gui.Parent = game.CoreGui
@@ -15,44 +15,37 @@ gui.ResetOnSpawn = false
 
 --------------------------------------------------
 -- MAIN UI
-local main = Instance.new("Frame")
-main.Parent = gui
+local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0,320,0,360)
 main.Position = UDim2.new(0.5,-160,0.5,-180)
-main.BackgroundColor3 = Color3.fromRGB(25,25,30)
+main.BackgroundColor3 = Color3.fromRGB(30,30,35)
 main.Active = true
 main.Draggable = true
 Instance.new("UICorner", main)
 
 --------------------------------------------------
 -- INFO PANEL
-local info = Instance.new("Frame")
-info.Parent = gui
+local info = Instance.new("Frame", gui)
 info.Size = UDim2.new(0,200,0,360)
 info.Position = UDim2.new(0.5,-380,0.5,-180)
-info.BackgroundColor3 = Color3.fromRGB(25,25,30)
+info.BackgroundColor3 = Color3.fromRGB(30,30,35)
 Instance.new("UICorner", info)
 
-local infoText = Instance.new("TextLabel")
-infoText.Parent = info
+local infoText = Instance.new("TextLabel", info)
 infoText.Size = UDim2.new(1,0,1,0)
 infoText.BackgroundTransparency = 1
 infoText.TextColor3 = Color3.new(1,1,1)
 infoText.TextScaled = true
 
 --------------------------------------------------
--- CLOSE
-local close = Instance.new("TextButton")
-close.Parent = main
+-- CLOSE + TOGGLE
+local close = Instance.new("TextButton", main)
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
 close.Text = "X"
 close.BackgroundColor3 = Color3.fromRGB(255,80,80)
 
---------------------------------------------------
--- TOGGLE BTN
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Parent = gui
+local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,60,0,60)
 toggleBtn.Position = UDim2.new(0.85,0,0.5,0)
 toggleBtn.Text = "☯"
@@ -60,35 +53,33 @@ toggleBtn.Visible = false
 
 --------------------------------------------------
 -- INPUT
-local input = Instance.new("TextBox")
-input.Parent = main
+local input = Instance.new("TextBox", main)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,50)
 input.PlaceholderText = "Nhập tên pet..."
-input.BackgroundColor3 = Color3.fromRGB(40,40,45)
+input.BackgroundColor3 = Color3.fromRGB(45,45,50)
 input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
 
 --------------------------------------------------
 -- TOGGLE BUTTON
 local function toggle(txt,y)
-    local btn = Instance.new("TextButton")
-    btn.Parent = main
+    local btn = Instance.new("TextButton", main)
     btn.Size = UDim2.new(0.8,0,0,40)
     btn.Position = UDim2.new(0.1,0,0,y)
     btn.Text = txt.." OFF"
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,45)
+    btn.BackgroundColor3 = Color3.fromRGB(45,45,50)
     btn.TextColor3 = Color3.new(1,1,1)
-
     Instance.new("UICorner", btn)
 
-    local state = false
+    btn:SetAttribute("state", false)
 
     btn.MouseButton1Click:Connect(function()
-        state = not state
+        local state = not btn:GetAttribute("state")
         btn:SetAttribute("state", state)
+
         btn.Text = txt.." "..(state and "ON" or "OFF")
-        btn.BackgroundColor3 = state and Color3.fromRGB(0,170,255) or Color3.fromRGB(40,40,45)
+        btn.BackgroundColor3 = state and Color3.fromRGB(0,170,255) or Color3.fromRGB(45,45,50)
     end)
 
     return btn
@@ -97,13 +88,13 @@ end
 local farmBtn = toggle("AUTO FARM 🤖",100)
 local scanBtn = toggle("SCAN 🔍",150)
 local aimBtn  = toggle("AIM 🎯",200)
-local espBtn = toggle("ESP PLAYER 👁",250)
+local espBtn  = toggle("ESP PLAYER 👁",250)
+
 --------------------------------------------------
 -- HOP BUTTON
-local hopBtn = Instance.new("TextButton")
-hopBtn.Parent = main
+local hopBtn = Instance.new("TextButton", main)
 hopBtn.Size = UDim2.new(0.8,0,0,40)
-hopBtn.Position = UDim2.new(0.1,0,0,260)
+hopBtn.Position = UDim2.new(0.1,0,0,300)
 hopBtn.Text = "HOP SERVER ⚡"
 hopBtn.BackgroundColor3 = Color3.fromRGB(100,100,255)
 hopBtn.TextColor3 = Color3.new(1,1,1)
@@ -185,34 +176,32 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- aim
-local aimEnabled = false
-local holdingMouse = false
+-- AIM (FIX XỊN CHUẨN)
+local holding = false
 
 UIS.InputBegan:Connect(function(i,gp)
     if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
-        holdingMouse = true
+        holding = true
     end
 end)
 
 UIS.InputEnded:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        holdingMouse = false
+        holding = false
     end
 end)
 
-local function getClosestToMouse()
-    local closest = nil
-    local shortest = math.huge
+local function getClosest()
+    local closest,dist = nil,math.huge
 
     for _,plr in pairs(game.Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local pos, onScreen = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+            local pos,visible = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
 
-            if onScreen then
-                local dist = (Vector2.new(pos.X,pos.Y) - UIS:GetMouseLocation()).Magnitude
-                if dist < shortest then
-                    shortest = dist
+            if visible then
+                local diff = (Vector2.new(pos.X,pos.Y) - UIS:GetMouseLocation()).Magnitude
+                if diff < dist then
+                    dist = diff
                     closest = plr.Character.HumanoidRootPart
                 end
             end
@@ -223,13 +212,11 @@ local function getClosestToMouse()
 end
 
 RunService.RenderStepped:Connect(function()
-    if aimBtn:GetAttribute("state") and holdingMouse then
-        local target = getClosestToMouse()
-
+    if aimBtn:GetAttribute("state") and holding then
+        local target = getClosest()
         if target then
-            local predict = target.Velocity * 0.1
             camera.CFrame = camera.CFrame:Lerp(
-                CFrame.new(camera.CFrame.Position, target.Position + predict),
+                CFrame.new(camera.CFrame.Position, target.Position),
                 0.3
             )
         end
@@ -237,27 +224,14 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
--- HOP SERVER FIX
-hopBtn.MouseButton1Click:Connect(function()
-    local data = HttpService:JSONDecode(game:HttpGet(
-        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
-    ))
-
-    for _,s in pairs(data.data) do
-        if s.playing < s.maxPlayers then
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-            break
-        end
-    end
-end)
------------------------------------------------
-local espList = {}
+-- ESP LINE (NHƯ ẢNH)
+local drawings = {}
 
 local function clearESP()
-    for _,v in pairs(espList) do
-        v:Destroy()
+    for _,v in pairs(drawings) do
+        v:Remove()
     end
-    espList = {}
+    drawings = {}
 end
 
 RunService.RenderStepped:Connect(function()
@@ -270,22 +244,33 @@ RunService.RenderStepped:Connect(function()
 
     for _,plr in pairs(game.Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = plr.Character.HumanoidRootPart
-
-            local line = Drawing.new("Line")
-            line.Color = Color3.new(1,1,1)
-            line.Thickness = 1
-
-            local pos, visible = camera:WorldToViewportPoint(hrp.Position)
+            local pos,visible = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
 
             if visible then
+                local line = Drawing.new("Line")
+                line.Color = Color3.new(1,1,1)
+                line.Thickness = 1
                 line.From = UIS:GetMouseLocation()
                 line.To = Vector2.new(pos.X,pos.Y)
                 line.Visible = true
-            end
 
-            table.insert(espList,line)
+                table.insert(drawings,line)
+            end
         end
     end
 end)
 
+--------------------------------------------------
+-- HOP SERVER (KHÔNG TRÙNG)
+hopBtn.MouseButton1Click:Connect(function()
+    local data = HttpService:JSONDecode(game:HttpGet(
+        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
+    ))
+
+    for _,s in pairs(data.data) do
+        if s.playing < s.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
+            break
+        end
+    end
+end)
