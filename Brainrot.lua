@@ -3,183 +3,122 @@ local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
 
 --------------------------------------------------
--- GUI MAIN
+-- GUI CHÍNH
 local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "PREMIUM_UI"
+gui.Name = "BRAINROT_UI"
 gui.ResetOnSpawn = false
 
--- ICON MỞ GUI
-local toggleBtn = Instance.new("TextButton", gui)
-toggleBtn.Size = UDim2.new(0,50,0,50)
-toggleBtn.Position = UDim2.new(0,20,0.5,-25)
-toggleBtn.Text = "☯"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-toggleBtn.TextScaled = true
+--------------------------------------------------
+-- MAIN PANEL (PHẢI)
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,300,0,350)
+main.Position = UDim2.new(0.5,-150,0.5,-175)
+main.BackgroundColor3 = Color3.fromRGB(240,240,240)
+main.Active = true
+main.Draggable = true
+Instance.new("UICorner", main)
 
--- FRAME
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,350,0,300)
-frame.Position = UDim2.new(0.5,-175,0.5,-150)
-frame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-frame.Active = true
-frame.Draggable = true
-Instance.new("UICorner",frame)
-
--- CLOSE
-local close = Instance.new("TextButton",frame)
+-- Nút X
+local close = Instance.new("TextButton", main)
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
 close.Text = "X"
-close.BackgroundColor3 = Color3.fromRGB(200,50,50)
+close.BackgroundColor3 = Color3.fromRGB(255,80,80)
 
-close.MouseButton1Click:Connect(function()
-    frame.Visible = false
-end)
+--------------------------------------------------
+-- NÚT MỞ LẠI (ICON)
+local toggleBtn = Instance.new("TextButton", gui)
+toggleBtn.Size = UDim2.new(0,60,0,60)
+toggleBtn.Position = UDim2.new(0.85,0,0.5,0)
+toggleBtn.Text = "☯"
+toggleBtn.Visible = false
 
-toggleBtn.MouseButton1Click:Connect(function()
-    frame.Visible = not frame.Visible
-end)
+--------------------------------------------------
+-- INFO PANEL (TRÁI)
+local info = Instance.new("Frame", gui)
+info.Size = UDim2.new(0,200,0,350)
+info.Position = UDim2.new(0.5,-360,0.5,-175)
+info.BackgroundColor3 = Color3.fromRGB(240,240,240)
+Instance.new("UICorner", info)
 
--- KEY K
-UIS.InputBegan:Connect(function(i,gp)
-    if not gp and i.KeyCode == Enum.KeyCode.K then
-        frame.Visible = not frame.Visible
-    end
-end)
+local infoText = Instance.new("TextLabel", info)
+infoText.Size = UDim2.new(1,0,1,0)
+infoText.BackgroundTransparency = 1
+infoText.TextScaled = true
+infoText.Text = "INFO"
 
 --------------------------------------------------
 -- INPUT
-local input = Instance.new("TextBox",frame)
-input.Size = UDim2.new(0.8,0,0,30)
-input.Position = UDim2.new(0.1,0,0,10)
-input.PlaceholderText = "Tên pet (vd: egg)"
+local input = Instance.new("TextBox", main)
+input.Size = UDim2.new(0.8,0,0,35)
+input.Position = UDim2.new(0.1,0,0,50)
+input.PlaceholderText = "Nhập tên pet..."
 
 --------------------------------------------------
--- BUTTON STYLE 🌈
-local function btn(name,y)
-    local b = Instance.new("TextButton",frame)
-    b.Size = UDim2.new(0.8,0,0,30)
-    b.Position = UDim2.new(0.1,0,0,y)
-    b.Text = name
-    b.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    b.TextColor3 = Color3.new(1,1,1)
-    b.TextScaled = true
+-- TOGGLE BUTTON
+local function toggle(txt,y)
+    local btn = Instance.new("TextButton", main)
+    btn.Size = UDim2.new(0.8,0,0,40)
+    btn.Position = UDim2.new(0.1,0,0,y)
+    btn.Text = txt.." OFF"
+    btn.BackgroundColor3 = Color3.fromRGB(200,200,200)
 
-    local stroke = Instance.new("UIStroke",b)
-    stroke.Thickness = 2
+    local state = false
 
-    task.spawn(function()
-        while b.Parent do
-            stroke.Color = Color3.fromHSV(tick()%5/5,1,1)
-            task.wait()
-        end
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = txt.." "..(state and "ON" or "OFF")
+        btn.BackgroundColor3 = state and Color3.fromRGB(100,255,100) or Color3.fromRGB(200,200,200)
+        btn:SetAttribute("state", state)
     end)
 
-    return b
+    return btn
 end
 
-local farmBtn = btn("AUTO FARM OFF",50)
-local scanBtn = btn("SCAN + NHẶT",90)
-local aimBtn  = btn("AIM OFF",130)
-local espBtn  = btn("ESP PLAYER",170)
-local infoBtn = btn("INFO PLAYER",210)
+local farmBtn = toggle("AUTO FARM 🤖",100)
+local scanBtn = toggle("SCAN + NHẶT 🔍",150)
+local espBtn  = toggle("ESP PLAYER 👁",200)
+local aimBtn  = toggle("AIM 🎯",250)
+local hopBtn  = toggle("HOP SERVER 📦",300)
 
 --------------------------------------------------
--- INFO PLAYER (FIX)
-local infoOn = false
-local infoGui
+-- GUI TOGGLE
+close.MouseButton1Click:Connect(function()
+    main.Visible = false
+    info.Visible = false
+    toggleBtn.Visible = true
+end)
 
-local function createInfo()
-    if infoGui then infoGui:Destroy() end
+toggleBtn.MouseButton1Click:Connect(function()
+    main.Visible = true
+    info.Visible = true
+    toggleBtn.Visible = false
+end)
 
-    infoGui = Instance.new("BillboardGui", game.CoreGui)
-    infoGui.Size = UDim2.new(0,200,0,60)
-    infoGui.AlwaysOnTop = true
-
-    RunService.RenderStepped:Connect(function()
-        if not infoOn then return end
-
-        local char = player.Character
-        if char and char:FindFirstChild("Head") and char:FindFirstChild("Humanoid") then
-            infoGui.Adornee = char.Head
-
-            if not infoGui:FindFirstChild("txt") then
-                local txt = Instance.new("TextLabel", infoGui)
-                txt.Name = "txt"
-                txt.Size = UDim2.new(1,0,1,0)
-                txt.BackgroundTransparency = 1
-                txt.TextScaled = true
-                txt.TextColor3 = Color3.new(1,1,1)
-            end
-
-            infoGui.txt.Text =
-                player.Name.." | HP: "..math.floor(char.Humanoid.Health)
-        end
-    end)
-end
-
-infoBtn.MouseButton1Click:Connect(function()
-    infoOn = not infoOn
-    infoBtn.Text = infoOn and "INFO ON" or "INFO PLAYER"
-
-    if infoOn then
-        createInfo()
-    else
-        if infoGui then infoGui:Destroy() end
+UIS.InputBegan:Connect(function(i,gp)
+    if not gp and i.KeyCode == Enum.KeyCode.K then
+        main.Visible = not main.Visible
+        info.Visible = main.Visible
+        toggleBtn.Visible = not main.Visible
     end
 end)
 
 --------------------------------------------------
--- ESP PLAYER (FIX FULL)
-local espOn = false
-local espList = {}
-
-local function clearESP()
-    for _,v in pairs(espList) do
-        if v then v:Destroy() end
-    end
-    espList = {}
-end
-
-local function createESP()
-    clearESP()
-
-    for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local beam = Instance.new("Beam", game.CoreGui)
-
-                local att0 = Instance.new("Attachment", camera)
-                local att1 = Instance.new("Attachment", hrp)
-
-                beam.Attachment0 = att0
-                beam.Attachment1 = att1
-                beam.Color = ColorSequence.new(Color3.new(1,1,1))
-                beam.Width0 = 0.1
-                beam.Width1 = 0.1
-
-                table.insert(espList, beam)
-            end
-        end
-    end
-end
-
-espBtn.MouseButton1Click:Connect(function()
-    espOn = not espOn
-    espBtn.Text = espOn and "ESP ON" or "ESP PLAYER"
-
-    if espOn then
-        createESP()
-    else
-        clearESP()
+-- INFO UPDATE
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        local hp = math.floor(char.Humanoid.Health)
+        infoText.Text = player.Name.."\nHP: "..hp
     end
 end)
 
 --------------------------------------------------
--- SCAN + FARM (FIX INPUT)
+-- SCAN PET
 local function scanPet()
     local keyword = string.lower(input.Text)
 
@@ -188,13 +127,15 @@ local function scanPet()
             local p = v:FindFirstChildWhichIsA("BasePart")
             if p then
                 if keyword == "" or string.find(string.lower(v.Name), keyword) then
-                    return v,p
+                    return v, p
                 end
             end
         end
     end
 end
 
+--------------------------------------------------
+-- FLY
 local function fly(part)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -202,10 +143,12 @@ local function fly(part)
     for i=1,40 do
         if not part then break end
         hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(part.Position + Vector3.new(0,3,0)),0.1)
-        task.wait()
+        task.wait(0.03)
     end
 end
 
+--------------------------------------------------
+-- AUTO PICKUP
 local function pickup(part)
     for _,v in pairs(part:GetDescendants()) do
         if v:IsA("ProximityPrompt") then
@@ -215,88 +158,97 @@ local function pickup(part)
 end
 
 --------------------------------------------------
--- AUTO FARM
-local farming = false
-
+-- AUTO FARM LOOP
 task.spawn(function()
     while true do
-        if farming then
-            local pet, part = scanPet()
+        if farmBtn:GetAttribute("state") then
+            local pet,part = scanPet()
             if pet then
                 fly(part)
                 pickup(part)
             end
         end
-        task.wait(0.5)
+        task.wait(0.4)
     end
-end)
-
-farmBtn.MouseButton1Click:Connect(function()
-    farming = not farming
-    farmBtn.Text = farming and "AUTO FARM ON" or "AUTO FARM OFF"
 end)
 
 --------------------------------------------------
 -- SCAN BUTTON
-scanBtn.MouseButton1Click:Connect(function()
-    local pet, part = scanPet()
-    if pet then
-        fly(part)
-        pickup(part)
+task.spawn(function()
+    while true do
+        if scanBtn:GetAttribute("state") then
+            local pet,part = scanPet()
+            if pet then
+                fly(part)
+                pickup(part)
+            end
+        end
+        task.wait(0.6)
     end
 end)
 
 --------------------------------------------------
--- AIM LOCK (XỊN)
-local aimOn = false
-local holding = false
+-- ESP PLAYER (DÂY TRẮNG)
+local esp = {}
 
-UIS.InputBegan:Connect(function(i,gp)
-    if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
-        holding = true
+RunService.RenderStepped:Connect(function()
+    if not espBtn:GetAttribute("state") then
+        for _,l in pairs(esp) do l:Remove() end
+        esp = {}
+        return
     end
-end)
-
-UIS.InputEnded:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        holding = false
-    end
-end)
-
-local function getTarget()
-    local closest, dist = nil, math.huge
 
     for _,plr in pairs(game.Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local pos = plr.Character.HumanoidRootPart.Position
-            local screen, vis = camera:WorldToViewportPoint(pos)
+            local hrp = plr.Character.HumanoidRootPart
+            local line = Drawing.new("Line")
+            line.From = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
+            local pos,_ = camera:WorldToViewportPoint(hrp.Position)
+            line.To = Vector2.new(pos.X,pos.Y)
+            line.Color = Color3.new(1,1,1)
+            line.Thickness = 1
+            line.Visible = true
+            table.insert(esp,line)
+        end
+    end
+end)
 
-            if vis then
-                local diff = (Vector2.new(screen.X,screen.Y) - UIS:GetMouseLocation()).Magnitude
-                if diff < dist then
-                    dist = diff
-                    closest = plr.Character.HumanoidRootPart
+--------------------------------------------------
+-- AIM LOCK XỊN
+RunService.RenderStepped:Connect(function()
+    if not aimBtn:GetAttribute("state") then return end
+
+    local closest,dist=nil,math.huge
+
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local pos,onscreen=camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+            if onscreen then
+                local diff=(Vector2.new(pos.X,pos.Y)-UIS:GetMouseLocation()).Magnitude
+                if diff<dist then
+                    dist=diff
+                    closest=plr.Character.HumanoidRootPart
                 end
             end
         end
     end
 
-    return closest
-end
-
-RunService.RenderStepped:Connect(function()
-    if aimOn and holding then
-        local t = getTarget()
-        if t then
-            camera.CFrame = camera.CFrame:Lerp(
-                CFrame.new(camera.CFrame.Position, t.Position + t.Velocity*0.1),
-                0.25
-            )
-        end
+    if closest then
+        camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position + closest.Velocity*0.1)
     end
 end)
 
-aimBtn.MouseButton1Click:Connect(function()
-    aimOn = not aimOn
-    aimBtn.Text = aimOn and "AIM ON" or "AIM OFF"
+--------------------------------------------------
+-- HOP SERVER KHÁC
+hopBtn.MouseButton1Click:Connect(function()
+    local servers = HttpService:JSONDecode(game:HttpGet(
+        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
+    ))
+
+    for _,s in pairs(servers.data) do
+        if s.playing < s.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
+            break
+        end
+    end
 end)
