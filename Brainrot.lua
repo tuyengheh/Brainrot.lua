@@ -224,70 +224,52 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
-        --------------------------------------------------
--- ESP LINE FIX (CHUẨN 100%)
-local espLines = {}
+        ----------------------------------------------------------------------------------------------------
+-- ESP PLAYER (FIX 100% - KHÔNG DÙNG DRAWING)
+local espList = {}
+
+local function clearESP()
+    for _,v in pairs(espList) do
+        if v then v:Destroy() end
+    end
+    espList = {}
+end
 
 local function createESP()
-    -- clear cũ
-    for _,v in pairs(espLines) do
-        if v then v:Remove() end
-    end
-    espLines = {}
+    clearESP()
 
     for _,plr in pairs(game.Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local line = Drawing.new("Line")
-            line.Color = Color3.new(1,1,1)
-            line.Thickness = 1
-            line.Transparency = 1
-
-            espLines[plr] = line
-        end
-    end
-end
-
-local function updateESP()
-    for plr,line in pairs(espLines) do
-        if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = plr.Character.HumanoidRootPart
-            local pos, visible = camera:WorldToViewportPoint(hrp.Position)
 
-            if visible then
-                line.From = UIS:GetMouseLocation()
-                line.To = Vector2.new(pos.X,pos.Y)
-                line.Visible = true
-            else
-                line.Visible = false
-            end
-        else
-            line.Visible = false
+            local bill = Instance.new("BillboardGui")
+            bill.Size = UDim2.new(0,100,0,40)
+            bill.Adornee = hrp
+            bill.AlwaysOnTop = true
+            bill.Parent = game.CoreGui
+
+            local txt = Instance.new("TextLabel", bill)
+            txt.Size = UDim2.new(1,0,1,0)
+            txt.BackgroundTransparency = 1
+            txt.TextColor3 = Color3.new(1,1,1)
+            txt.TextScaled = true
+            txt.Text = plr.Name
+
+            table.insert(espList, bill)
         end
     end
 end
 
--- bật/tắt ESP
+-- toggle
 espBtn.MouseButton1Click:Connect(function()
-    local state = espBtn:GetAttribute("state")
-
-    if state then
+    if espBtn:GetAttribute("state") then
         createESP()
     else
-        for _,v in pairs(espLines) do
-            if v then v:Remove() end
-        end
-        espLines = {}
+        clearESP()
     end
 end)
 
--- update liên tục
-RunService.RenderStepped:Connect(function()
-    if espBtn:GetAttribute("state") then
-        updateESP()
-    end
-end)
-
--- cập nhật khi có player mới
+-- update player mới
 game.Players.PlayerAdded:Connect(function()
     if espBtn:GetAttribute("state") then
         task.wait(1)
