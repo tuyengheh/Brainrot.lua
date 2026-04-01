@@ -97,7 +97,7 @@ end
 local farmBtn = toggle("AUTO FARM 🤖",100)
 local scanBtn = toggle("SCAN 🔍",150)
 local aimBtn  = toggle("AIM 🎯",200)
-
+local espBtn = toggle("ESP PLAYER 👁",250)
 --------------------------------------------------
 -- HOP BUTTON
 local hopBtn = Instance.new("TextButton")
@@ -185,7 +185,7 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- AIM (GIỮ CHUỘT TRÁI)
+-- aim
 local aimEnabled = false
 local holdingMouse = false
 
@@ -201,17 +201,78 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
-RunService.RenderStepped:Connect(function()
-    if not aimBtn:GetAttribute("state") or not holdingMouse then return end
+local function getClosestToMouse()
+    local closest = nil
+    local shortest = math.huge
 
     for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, plr.Character.HumanoidRootPart.Position)
-            break
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+
+            if onScreen then
+                local dist = (Vector2.new(pos.X,pos.Y) - UIS:GetMouseLocation()).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    closest = plr.Character.HumanoidRootPart
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+RunService.RenderStepped:Connect(function()
+    if aimBtn:GetAttribute("state") and holdingMouse then
+        local target = getClosestToMouse()
+
+        if target then
+            local predict = target.Velocity * 0.1
+            camera.CFrame = camera.CFrame:Lerp(
+                CFrame.new(camera.CFrame.Position, target.Position + predict),
+                0.3
+            )
         end
     end
 end)
+----------------------------
+local espList = {}
 
+local function clearESP()
+    for _,v in pairs(espList) do
+        v:Destroy()
+    end
+    espList = {}
+end
+
+RunService.RenderStepped:Connect(function()
+    if not espBtn:GetAttribute("state") then
+        clearESP()
+        return
+    end
+
+    clearESP()
+
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = plr.Character.HumanoidRootPart
+
+            local line = Drawing.new("Line")
+            line.Color = Color3.new(1,1,1)
+            line.Thickness = 1
+
+            local pos, visible = camera:WorldToViewportPoint(hrp.Position)
+
+            if visible then
+                line.From = UIS:GetMouseLocation()
+                line.To = Vector2.new(pos.X,pos.Y)
+                line.Visible = true
+            end
+
+            table.insert(espList,line)
+        end
+    end
+end)
 --------------------------------------------------
 -- HOP SERVER FIX
 hopBtn.MouseButton1Click:Connect(function()
