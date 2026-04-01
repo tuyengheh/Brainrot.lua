@@ -235,7 +235,22 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-----------------------------
+
+--------------------------------------------------
+-- HOP SERVER FIX
+hopBtn.MouseButton1Click:Connect(function()
+    local data = HttpService:JSONDecode(game:HttpGet(
+        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
+    ))
+
+    for _,s in pairs(data.data) do
+        if s.playing < s.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
+            break
+        end
+    end
+end)
+-----------------------------------------------
 local espList = {}
 
 local function clearESP()
@@ -273,17 +288,4 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
---------------------------------------------------
--- HOP SERVER FIX
-hopBtn.MouseButton1Click:Connect(function()
-    local data = HttpService:JSONDecode(game:HttpGet(
-        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
-    ))
 
-    for _,s in pairs(data.data) do
-        if s.playing < s.maxPlayers then
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-            break
-        end
-    end
-end)
