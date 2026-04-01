@@ -2,6 +2,7 @@
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 --// GUI
 local gui = Instance.new("ScreenGui")
@@ -44,7 +45,7 @@ input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,75)
 input.PlaceholderText = "Nhập tên (vd: egg)..."
 
--- BUTTON
+-- BUTTON + VIỀN CẦU VỒNG 🌈
 local function btn(txt,y)
     local b = Instance.new("TextButton",scroll)
     b.Size = UDim2.new(0.8,0,0,35)
@@ -53,7 +54,21 @@ local function btn(txt,y)
     b.BackgroundColor3 = Color3.fromRGB(0,0,0)
     b.TextScaled = true
     b.TextColor3 = Color3.new(1,1,1)
+
     Instance.new("UICorner",b)
+
+    -- stroke cầu vồng
+    local stroke = Instance.new("UIStroke", b)
+    stroke.Thickness = 2
+
+    task.spawn(function()
+        while b.Parent do
+            local t = tick()
+            stroke.Color = Color3.fromHSV((t % 5)/5,1,1)
+            task.wait()
+        end
+    end)
+
     return b
 end
 
@@ -66,7 +81,7 @@ local hopBtn   = btn("HOP NHANH ⚡",300)
 --------------------------------------------------
 -- NOCLIP
 local noclip = false
-game:GetService("RunService").Stepped:Connect(function()
+RunService.Stepped:Connect(function()
     if noclip and player.Character then
         for _,v in pairs(player.Character:GetDescendants()) do
             if v:IsA("BasePart") then
@@ -77,20 +92,52 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 --------------------------------------------------
--- FLY MƯỢT (ANTI KICK)
+-- ✅ FIX SPAWN (CHUẨN 100%)
+local spawnCFrame
+
+local function setSpawn()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    spawnCFrame = hrp.CFrame
+end
+
+-- đảm bảo luôn có spawn
+task.spawn(function()
+    repeat task.wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    setSpawn()
+end)
+
+player.CharacterAdded:Connect(function(char)
+    repeat task.wait() until char:FindFirstChild("HumanoidRootPart")
+    spawnCFrame = char.HumanoidRootPart.CFrame
+end)
+
+-- 🚀 TELEPORT ANTI KICK (không bị rollback)
+local function goSpawn()
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp or not spawnCFrame then return end
+
+    noclip = true
+    for i = 1,8 do
+        hrp.CFrame = spawnCFrame
+        task.wait()
+    end
+    noclip = false
+
+    log.Text = "🚀 ĐÃ VỀ SPAWN"
+end
+
+--------------------------------------------------
+-- FLY MƯỢT
 local function smoothFly(part)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
     noclip = true
-    local start = tick()
 
-    while part and part.Parent do
+    for i = 1,50 do
+        if not part then break end
         local target = part.Position + Vector3.new(0,3,0)
-        local dist = (hrp.Position - target).Magnitude
-
-        if dist < 3 or tick() - start > 5 then break end
-
         hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.08)
         task.wait(0.03)
     end
@@ -99,7 +146,7 @@ local function smoothFly(part)
 end
 
 --------------------------------------------------
--- SCAN FULL MAP
+-- SCAN
 local function scanPet()
     local keyword = string.lower(input.Text)
 
@@ -116,7 +163,7 @@ local function scanPet()
 end
 
 --------------------------------------------------
--- AUTO PICKUP
+-- PICKUP
 local function autoPickup(part)
     for i = 1,5 do
         if not part then break end
@@ -126,28 +173,25 @@ local function autoPickup(part)
                 fireproximityprompt(v)
             end
         end
-        task.wait(0.3)
+        task.wait(0.2)
     end
 end
 
 --------------------------------------------------
--- AUTO FARM (BAY MƯỢT)
+-- AUTO FARM
 local farming = false
 
 task.spawn(function()
     while true do
         if farming then
             local pet, part = scanPet()
-
             if pet then
                 log.Text = "🤖 "..pet.Name
                 smoothFly(part)
                 autoPickup(part)
-            else
-                log.Text = "❌ KHÔNG CÓ"
             end
         end
-        task.wait(0.5)
+        task.wait(0.4)
     end
 end)
 
@@ -167,7 +211,7 @@ scanBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- AIM (GIỮ NGUYÊN)
+-- 🔥 AIM LOCK XỊN
 local aimEnabled = false
 local holdingMouse = false
 
@@ -185,14 +229,19 @@ end)
 
 local function getClosestPlayer()
     local closest, dist = nil, math.huge
-    local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    local myPos = camera.CFrame.Position
 
     for _,plr in pairs(game.Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local d = (myHRP.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-            if d < dist then
-                dist = d
-                closest = plr.Character.HumanoidRootPart
+            local pos = plr.Character.HumanoidRootPart.Position
+            local screenPos, onScreen = camera:WorldToViewportPoint(pos)
+
+            if onScreen then
+                local diff = (Vector2.new(screenPos.X,screenPos.Y) - UIS:GetMouseLocation()).Magnitude
+                if diff < dist then
+                    dist = diff
+                    closest = plr.Character.HumanoidRootPart
+                end
             end
         end
     end
@@ -200,15 +249,16 @@ local function getClosestPlayer()
     return closest
 end
 
-task.spawn(function()
-    while true do
-        if aimEnabled and holdingMouse then
-            local target = getClosestPlayer()
-            if target then
-                camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
-            end
+RunService.RenderStepped:Connect(function()
+    if aimEnabled and holdingMouse then
+        local target = getClosestPlayer()
+        if target then
+            local predict = target.Velocity * 0.1
+            camera.CFrame = camera.CFrame:Lerp(
+                CFrame.new(camera.CFrame.Position, target.Position + predict),
+                0.25
+            )
         end
-        task.wait(0.02)
     end
 end)
 
