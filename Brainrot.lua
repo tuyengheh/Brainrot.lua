@@ -7,12 +7,16 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 
 --------------------------------------------------
--- GUI (GIỮ NGUYÊN DARK)
-local gui = Instance.new("ScreenGui", game.CoreGui)
+-- GUI ROOT (FIX QUAN TRỌNG)
+local gui = Instance.new("ScreenGui")
 gui.Name = "BRAINROT_UI"
+gui.Parent = game.CoreGui
 gui.ResetOnSpawn = false
 
-local main = Instance.new("Frame", gui)
+--------------------------------------------------
+-- MAIN UI
+local main = Instance.new("Frame")
+main.Parent = gui
 main.Size = UDim2.new(0,320,0,360)
 main.Position = UDim2.new(0.5,-160,0.5,-180)
 main.BackgroundColor3 = Color3.fromRGB(25,25,30)
@@ -20,27 +24,35 @@ main.Active = true
 main.Draggable = true
 Instance.new("UICorner", main)
 
-local info = Instance.new("Frame", gui)
+--------------------------------------------------
+-- INFO PANEL
+local info = Instance.new("Frame")
+info.Parent = gui
 info.Size = UDim2.new(0,200,0,360)
 info.Position = UDim2.new(0.5,-380,0.5,-180)
 info.BackgroundColor3 = Color3.fromRGB(25,25,30)
 Instance.new("UICorner", info)
 
-local infoText = Instance.new("TextLabel", info)
+local infoText = Instance.new("TextLabel")
+infoText.Parent = info
 infoText.Size = UDim2.new(1,0,1,0)
 infoText.BackgroundTransparency = 1
 infoText.TextColor3 = Color3.new(1,1,1)
 infoText.TextScaled = true
 
 --------------------------------------------------
--- CLOSE + TOGGLE
-local close = Instance.new("TextButton", main)
+-- CLOSE
+local close = Instance.new("TextButton")
+close.Parent = main
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
 close.Text = "X"
 close.BackgroundColor3 = Color3.fromRGB(255,80,80)
 
-local toggleBtn = Instance.new("TextButton", gui)
+--------------------------------------------------
+-- TOGGLE BTN
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Parent = gui
 toggleBtn.Size = UDim2.new(0,60,0,60)
 toggleBtn.Position = UDim2.new(0.85,0,0.5,0)
 toggleBtn.Text = "☯"
@@ -48,7 +60,8 @@ toggleBtn.Visible = false
 
 --------------------------------------------------
 -- INPUT
-local input = Instance.new("TextBox", main)
+local input = Instance.new("TextBox")
+input.Parent = main
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,50)
 input.PlaceholderText = "Nhập tên pet..."
@@ -57,9 +70,10 @@ input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
 
 --------------------------------------------------
--- TOGGLE
+-- TOGGLE BUTTON
 local function toggle(txt,y)
-    local btn = Instance.new("TextButton", main)
+    local btn = Instance.new("TextButton")
+    btn.Parent = main
     btn.Size = UDim2.new(0.8,0,0,40)
     btn.Position = UDim2.new(0.1,0,0,y)
     btn.Text = txt.." OFF"
@@ -72,30 +86,31 @@ local function toggle(txt,y)
 
     btn.MouseButton1Click:Connect(function()
         state = not state
+        btn:SetAttribute("state", state)
         btn.Text = txt.." "..(state and "ON" or "OFF")
         btn.BackgroundColor3 = state and Color3.fromRGB(0,170,255) or Color3.fromRGB(40,40,45)
-        btn:SetAttribute("state", state)
     end)
 
     return btn
 end
 
 local farmBtn = toggle("AUTO FARM 🤖",100)
-local scanBtn = toggle("SCAN + NHẶT 🔍",150)
-local espBtn  = toggle("ESP PLAYER 👁",200)
-local aimBtn  = toggle("AIM 🎯",250)
+local scanBtn = toggle("SCAN 🔍",150)
+local aimBtn  = toggle("AIM 🎯",200)
 
--- HOP BUTTON (KHÔNG TOGGLE)
-local hopBtn = Instance.new("TextButton", main)
+--------------------------------------------------
+-- HOP BUTTON
+local hopBtn = Instance.new("TextButton")
+hopBtn.Parent = main
 hopBtn.Size = UDim2.new(0.8,0,0,40)
-hopBtn.Position = UDim2.new(0.1,0,0,300)
+hopBtn.Position = UDim2.new(0.1,0,0,260)
 hopBtn.Text = "HOP SERVER ⚡"
 hopBtn.BackgroundColor3 = Color3.fromRGB(100,100,255)
 hopBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", hopBtn)
 
 --------------------------------------------------
--- GUI TOGGLE
+-- TOGGLE GUI
 close.MouseButton1Click:Connect(function()
     main.Visible = false
     info.Visible = false
@@ -117,7 +132,7 @@ UIS.InputBegan:Connect(function(i,gp)
 end)
 
 --------------------------------------------------
--- INFO PLAYER
+-- INFO UPDATE
 RunService.RenderStepped:Connect(function()
     local char = player.Character
     if char and char:FindFirstChild("Humanoid") then
@@ -156,16 +171,6 @@ local function fly(part)
 end
 
 --------------------------------------------------
--- PICKUP
-local function pickup(part)
-    for _,v in pairs(part:GetDescendants()) do
-        if v:IsA("ProximityPrompt") then
-            fireproximityprompt(v)
-        end
-    end
-end
-
---------------------------------------------------
 -- AUTO FARM
 task.spawn(function()
     while true do
@@ -173,7 +178,6 @@ task.spawn(function()
             local pet,part = scanPet()
             if pet then
                 fly(part)
-                pickup(part)
             end
         end
         task.wait(0.4)
@@ -181,7 +185,7 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- AIM VIP (GIỮ CHUỘT TRÁI)
+-- AIM (GIỮ CHUỘT TRÁI)
 local aimEnabled = false
 local holdingMouse = false
 
@@ -197,56 +201,27 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
-local function getClosestPlayer()
-    local closest, dist = nil, math.huge
-
-    for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local pos, onScreen = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
-
-            if onScreen then
-                local diff = (Vector2.new(pos.X,pos.Y) - UIS:GetMouseLocation()).Magnitude
-                if diff < dist then
-                    dist = diff
-                    closest = plr.Character.HumanoidRootPart
-                end
-            end
-        end
-    end
-
-    return closest
-end
-
 RunService.RenderStepped:Connect(function()
     if not aimBtn:GetAttribute("state") or not holdingMouse then return end
 
-    local target = getClosestPlayer()
-    if target then
-        local predict = target.Velocity * 0.12
-        camera.CFrame = camera.CFrame:Lerp(
-            CFrame.new(camera.CFrame.Position, target.Position + predict),
-            0.25
-        )
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, plr.Character.HumanoidRootPart.Position)
+            break
+        end
     end
 end)
 
 --------------------------------------------------
--- 🔥 HOP SERVER KHÔNG TRÙNG (FIX CHUẨN)
-local visited = {}
-
+-- HOP SERVER FIX
 hopBtn.MouseButton1Click:Connect(function()
-    local servers = HttpService:JSONDecode(game:HttpGet(
+    local data = HttpService:JSONDecode(game:HttpGet(
         "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
     ))
 
-    for _,s in pairs(servers.data) do
-        if s.playing < s.maxPlayers and not visited[s.id] then
-            visited[s.id] = true
+    for _,s in pairs(data.data) do
+        if s.playing < s.maxPlayers then
             TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-            break
-        end
-    end
-end)nstance(game.PlaceId, s.id)
             break
         end
     end
