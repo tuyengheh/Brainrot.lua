@@ -206,10 +206,36 @@ espBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- HOP SERVER
+-- 🔥 HOP SERVER KHÁC (ANTI TRÙNG)
 local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local function hopServer()
+    local placeId = game.PlaceId
+    local jobId = game.JobId
+
+    local servers = {}
+    local req = game:HttpGet(
+        "https://games.roblox.com/v1/games/"..placeId.."/servers/Public?sortOrder=Asc&limit=100"
+    )
+    local data = HttpService:JSONDecode(req)
+
+    for _,v in pairs(data.data) do
+        if v.playing < v.maxPlayers and v.id ~= jobId then
+            table.insert(servers, v.id)
+        end
+    end
+
+    if #servers > 0 then
+        local randomServer = servers[math.random(1,#servers)]
+        TeleportService:TeleportToPlaceInstance(placeId, randomServer, player)
+    else
+        log.Text = "❌ KHÔNG TÌM ĐƯỢC SERVER"
+    end
+end
+
 hopBtn.MouseButton1Click:Connect(function()
-    TeleportService:Teleport(game.PlaceId)
+    hopServer()
 end)
 
 --------------------------------------------------
