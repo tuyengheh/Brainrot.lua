@@ -206,7 +206,68 @@ task.spawn(function()
         task.wait(0.6)
     end
 end)
+--------------------------------------------------
+-- 🔥 AIM LOCK VIP (GIỮ CHUỘT TRÁI MỚI AIM)
 
+local aimEnabled = false
+local holdingMouse = false
+
+-- check giữ chuột trái
+UIS.InputBegan:Connect(function(i,gp)
+    if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
+        holdingMouse = true
+    end
+end)
+
+UIS.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
+        holdingMouse = false
+    end
+end)
+
+-- tìm target gần tâm chuột (xịn hơn)
+local function getClosestPlayer()
+    local closest, dist = nil, math.huge
+
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+
+            if onScreen then
+                local mousePos = UIS:GetMouseLocation()
+                local diff = (Vector2.new(pos.X,pos.Y) - mousePos).Magnitude
+
+                if diff < dist then
+                    dist = diff
+                    closest = plr.Character.HumanoidRootPart
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+-- aim mượt + predict
+RunService.RenderStepped:Connect(function()
+    if not aimEnabled or not holdingMouse then return end
+
+    local target = getClosestPlayer()
+    if target then
+        local predict = target.Velocity * 0.12
+
+        camera.CFrame = camera.CFrame:Lerp(
+            CFrame.new(camera.CFrame.Position, target.Position + predict),
+            0.25 -- độ mượt (có thể chỉnh)
+        )
+    end
+end)
+
+-- nút bật tắt
+aimBtn.MouseButton1Click:Connect(function()
+    aimEnabled = not aimEnabled
+    aimBtn.Text = "AIM "..(aimEnabled and "ON 🎯" or "OFF 🎯")
+end)
 --------------------------------------------------
 -- ESP PLAYER ĐẸP (BOX + TÊN)
 local espList = {}
