@@ -78,24 +78,29 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 --------------------------------------------------
--- FLY TO PET
-local function flyToPet(part)
+-- FLY MƯỢT (ANTI KICK)
+local function smoothFly(part)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
     noclip = true
+    local start = tick()
 
-    for i = 1,30 do
-        if not part then break end
-        hrp.CFrame = CFrame.new(part.Position + Vector3.new(0,3,0))
-        task.wait()
+    while part and part.Parent do
+        local target = part.Position + Vector3.new(0,3,0)
+        local dist = (hrp.Position - target).Magnitude
+
+        if dist < 3 or tick() - start > 5 then break end
+
+        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.08)
+        task.wait(0.03)
     end
 
     noclip = false
 end
 
 --------------------------------------------------
--- SCAN (FULL MAP)
+-- SCAN FULL MAP
 local function scanPet()
     local keyword = string.lower(input.Text)
 
@@ -127,7 +132,7 @@ local function autoPickup(part)
 end
 
 --------------------------------------------------
--- AUTO FARM
+-- AUTO FARM (BAY MƯỢT)
 local farming = false
 
 task.spawn(function()
@@ -137,7 +142,7 @@ task.spawn(function()
 
             if pet then
                 log.Text = "🤖 "..pet.Name
-                flyToPet(part)
+                smoothFly(part)
                 autoPickup(part)
             else
                 log.Text = "❌ KHÔNG CÓ"
@@ -157,11 +162,8 @@ end)
 scanBtn.MouseButton1Click:Connect(function()
     local pet, part = scanPet()
     if pet then
-        log.Text = "🔥 "..pet.Name
-        flyToPet(part)
+        smoothFly(part)
         autoPickup(part)
-    else
-        log.Text = "❌ KHÔNG CÓ"
     end
 end)
 
@@ -217,7 +219,7 @@ aimBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- ESP NAME (TO)
+-- ESP (GIỮ)
 local espEnabled = false
 local espObjects = {}
 
@@ -246,7 +248,6 @@ local function createESP()
                     txt.Size = UDim2.new(1,0,1,0)
                     txt.BackgroundTransparency = 1
                     txt.Text = v.Name
-                    txt.TextColor3 = Color3.new(0,1,0)
                     txt.TextScaled = true
 
                     table.insert(espObjects, bill)
