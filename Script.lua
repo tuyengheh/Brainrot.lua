@@ -58,7 +58,7 @@ local function btn(txt,y)
     return b
 end
 
-local flyBtn   = btn("TELEPORT SPAWN 🚀",120)
+local farmBtn  = btn("AUTO FARM OFF 🤖",120)
 local scanBtn  = btn("SCAN + NHẶT 🔍",165)
 local aimBtn   = btn("AIM OFF 🎯",210)
 local espBtn   = btn("ESP NAME 👁",255)
@@ -78,36 +78,14 @@ game:GetService("RunService").Stepped:Connect(function()
 end)
 
 --------------------------------------------------
--- SPAWN (TELEPORT)
-local spawnPos
-local function setSpawn()
-    local char = player.Character or player.CharacterAdded:Wait()
-    spawnPos = char:WaitForChild("HumanoidRootPart").Position
-end
-
-setSpawn()
-player.CharacterAdded:Connect(function()
-    task.wait(1)
-    setSpawn()
-end)
-
-local function flyToSpawn()
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp or not spawnPos then return end
-
-    hrp.CFrame = CFrame.new(spawnPos)
-    log.Text = "🚀 TELEPORT SPAWN"
-end
-
---------------------------------------------------
--- FLY TO PET (giữ)
+-- FLY TO PET
 local function flyToPet(part)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
     noclip = true
 
-    for i = 1,40 do
+    for i = 1,30 do
         if not part then break end
         hrp.CFrame = CFrame.new(part.Position + Vector3.new(0,3,0))
         task.wait()
@@ -117,26 +95,20 @@ local function flyToPet(part)
 end
 
 --------------------------------------------------
--- SCAN (KHÔNG GIỚI HẠN)
+-- SCAN (FULL MAP)
 local function scanPet()
     local keyword = string.lower(input.Text)
-
-    local closest, part
 
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") then
             local p = v:FindFirstChildWhichIsA("BasePart")
             if p then
                 if keyword == "" or string.find(string.lower(v.Name), keyword) then
-                    closest = v
-                    part = p
-                    break
+                    return v, p
                 end
             end
         end
     end
-
-    return closest, part
 end
 
 --------------------------------------------------
@@ -155,16 +127,39 @@ local function autoPickup(part)
 end
 
 --------------------------------------------------
+-- AUTO FARM
+local farming = false
+
+task.spawn(function()
+    while true do
+        if farming then
+            local pet, part = scanPet()
+
+            if pet then
+                log.Text = "🤖 "..pet.Name
+                flyToPet(part)
+                autoPickup(part)
+            else
+                log.Text = "❌ KHÔNG CÓ"
+            end
+        end
+        task.wait(0.5)
+    end
+end)
+
+farmBtn.MouseButton1Click:Connect(function()
+    farming = not farming
+    farmBtn.Text = farming and "AUTO FARM ON 🤖" or "AUTO FARM OFF 🤖"
+end)
+
+--------------------------------------------------
 -- SCAN BUTTON
 scanBtn.MouseButton1Click:Connect(function()
-    log.Text = "🔍 Đang check..."
-
     local pet, part = scanPet()
     if pet then
         log.Text = "🔥 "..pet.Name
         flyToPet(part)
         autoPickup(part)
-        log.Text = "✅ Thành công"
     else
         log.Text = "❌ KHÔNG CÓ"
     end
@@ -222,7 +217,7 @@ aimBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- ESP NAME (CHỮ TO)
+-- ESP NAME (TO)
 local espEnabled = false
 local espObjects = {}
 
@@ -253,7 +248,6 @@ local function createESP()
                     txt.Text = v.Name
                     txt.TextColor3 = Color3.new(0,1,0)
                     txt.TextScaled = true
-                    txt.Font = Enum.Font.SourceSansBold
 
                     table.insert(espObjects, bill)
                 end
