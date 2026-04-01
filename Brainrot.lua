@@ -223,40 +223,75 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
---------------------------------------------------
--- ESP LINE (NHƯ ẢNH)
-local drawings = {}
 
-local function clearESP()
-    for _,v in pairs(drawings) do
-        v:Remove()
+        --------------------------------------------------
+-- ESP LINE FIX (CHUẨN 100%)
+local espLines = {}
+
+local function createESP()
+    -- clear cũ
+    for _,v in pairs(espLines) do
+        if v then v:Remove() end
     end
-    drawings = {}
-end
-
-RunService.RenderStepped:Connect(function()
-    if not espBtn:GetAttribute("state") then
-        clearESP()
-        return
-    end
-
-    clearESP()
+    espLines = {}
 
     for _,plr in pairs(game.Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local pos,visible = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+            local line = Drawing.new("Line")
+            line.Color = Color3.new(1,1,1)
+            line.Thickness = 1
+            line.Transparency = 1
+
+            espLines[plr] = line
+        end
+    end
+end
+
+local function updateESP()
+    for plr,line in pairs(espLines) do
+        if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = plr.Character.HumanoidRootPart
+            local pos, visible = camera:WorldToViewportPoint(hrp.Position)
 
             if visible then
-                local line = Drawing.new("Line")
-                line.Color = Color3.new(1,1,1)
-                line.Thickness = 1
                 line.From = UIS:GetMouseLocation()
                 line.To = Vector2.new(pos.X,pos.Y)
                 line.Visible = true
-
-                table.insert(drawings,line)
+            else
+                line.Visible = false
             end
+        else
+            line.Visible = false
         end
+    end
+end
+
+-- bật/tắt ESP
+espBtn.MouseButton1Click:Connect(function()
+    local state = espBtn:GetAttribute("state")
+
+    if state then
+        createESP()
+    else
+        for _,v in pairs(espLines) do
+            if v then v:Remove() end
+        end
+        espLines = {}
+    end
+end)
+
+-- update liên tục
+RunService.RenderStepped:Connect(function()
+    if espBtn:GetAttribute("state") then
+        updateESP()
+    end
+end)
+
+-- cập nhật khi có player mới
+game.Players.PlayerAdded:Connect(function()
+    if espBtn:GetAttribute("state") then
+        task.wait(1)
+        createESP()
     end
 end)
 
