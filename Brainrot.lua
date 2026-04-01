@@ -5,6 +5,18 @@ local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
+local SoundService = game:GetService("SoundService")
+
+--------------------------------------------------
+-- SOUND
+local function playSound(id)
+    local s = Instance.new("Sound")
+    s.SoundId = "rbxassetid://"..id
+    s.Volume = 2
+    s.Parent = SoundService
+    s:Play()
+    game.Debris:AddItem(s,2)
+end
 
 --------------------------------------------------
 -- SAVE SPAWN
@@ -103,6 +115,8 @@ local function toggle(txt,y)
         btn:SetAttribute("state", s)
         btn.Text = txt.." "..(s and "ON" or "OFF")
         btn.BackgroundColor3 = s and Color3.fromRGB(0,170,255) or Color3.fromRGB(45,45,50)
+
+        playSound(s and 6026984224 or 6026984223)
     end)
 
     return btn
@@ -123,23 +137,17 @@ hopBtn.Text = "HOP SERVER ⚡"
 --------------------------------------------------
 -- GUI TOGGLE
 close.MouseButton1Click:Connect(function()
+    playSound(6026984223)
     main.Visible = false
     info.Visible = false
     toggleBtn.Visible = true
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
+    playSound(6026984224)
     main.Visible = true
     info.Visible = true
     toggleBtn.Visible = false
-end)
-
-UIS.InputBegan:Connect(function(i,gp)
-    if not gp and i.KeyCode == Enum.KeyCode.K then
-        main.Visible = not main.Visible
-        info.Visible = main.Visible
-        toggleBtn.Visible = not main.Visible
-    end
 end)
 
 --------------------------------------------------
@@ -180,12 +188,19 @@ local function fly(cf)
 end
 
 --------------------------------------------------
--- PICKUP
+-- PICKUP + SOUND 🔥
 local function pickup(part)
+    local picked = false
+
     for _,v in pairs(part:GetDescendants()) do
         if v:IsA("ProximityPrompt") then
             fireproximityprompt(v)
+            picked = true
         end
+    end
+
+    if picked then
+        playSound(9114487369) -- 🔥 sound nhặt pet
     end
 end
 
@@ -223,7 +238,7 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- AIM (CHUỘT TRÁI)
+-- AIM
 local holding=false
 
 UIS.InputBegan:Connect(function(i,gp)
@@ -268,9 +283,8 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
--- ESP (FIX HIỂN THỊ)
+-- ESP
 local espList={}
-
 RunService.RenderStepped:Connect(function()
     for _,v in pairs(espList) do v:Destroy() end
     espList={}
@@ -303,6 +317,8 @@ end)
 --------------------------------------------------
 -- HOP SERVER
 hopBtn.MouseButton1Click:Connect(function()
+    playSound(9118828564)
+
     local data = HttpService:JSONDecode(game:HttpGet(
         "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
     ))
