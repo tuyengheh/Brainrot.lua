@@ -7,13 +7,11 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 
 --------------------------------------------------
--- GUI
+-- GUI (GIỮ NGUYÊN DARK)
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "BRAINROT_UI"
 gui.ResetOnSpawn = false
 
---------------------------------------------------
--- MAIN (ĐẸP DARK)
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0,320,0,360)
 main.Position = UDim2.new(0.5,-160,0.5,-180)
@@ -22,13 +20,6 @@ main.Active = true
 main.Draggable = true
 Instance.new("UICorner", main)
 
--- viền đẹp
-local stroke = Instance.new("UIStroke", main)
-stroke.Color = Color3.fromRGB(100,150,255)
-stroke.Thickness = 2
-
---------------------------------------------------
--- INFO PANEL
 local info = Instance.new("Frame", gui)
 info.Size = UDim2.new(0,200,0,360)
 info.Position = UDim2.new(0.5,-380,0.5,-180)
@@ -42,15 +33,13 @@ infoText.TextColor3 = Color3.new(1,1,1)
 infoText.TextScaled = true
 
 --------------------------------------------------
--- NÚT X
+-- CLOSE + TOGGLE
 local close = Instance.new("TextButton", main)
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
 close.Text = "X"
 close.BackgroundColor3 = Color3.fromRGB(255,80,80)
 
---------------------------------------------------
--- NÚT MỞ LẠI ☯
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,60,0,60)
 toggleBtn.Position = UDim2.new(0.85,0,0.5,0)
@@ -68,7 +57,7 @@ input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
 
 --------------------------------------------------
--- TOGGLE ĐẸP
+-- TOGGLE
 local function toggle(txt,y)
     local btn = Instance.new("TextButton", main)
     btn.Size = UDim2.new(0.8,0,0,40)
@@ -91,13 +80,12 @@ local function toggle(txt,y)
     return btn
 end
 
--- BUTTON
 local farmBtn = toggle("AUTO FARM 🤖",100)
 local scanBtn = toggle("SCAN + NHẶT 🔍",150)
 local espBtn  = toggle("ESP PLAYER 👁",200)
 local aimBtn  = toggle("AIM 🎯",250)
 
--- HOP = BUTTON THƯỜNG
+-- HOP BUTTON (KHÔNG TOGGLE)
 local hopBtn = Instance.new("TextButton", main)
 hopBtn.Size = UDim2.new(0.8,0,0,40)
 hopBtn.Position = UDim2.new(0.1,0,0,300)
@@ -107,7 +95,7 @@ hopBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", hopBtn)
 
 --------------------------------------------------
--- TOGGLE GUI
+-- GUI TOGGLE
 close.MouseButton1Click:Connect(function()
     main.Visible = false
     info.Visible = false
@@ -129,7 +117,7 @@ UIS.InputBegan:Connect(function(i,gp)
 end)
 
 --------------------------------------------------
--- INFO UPDATE
+-- INFO PLAYER
 RunService.RenderStepped:Connect(function()
     local char = player.Character
     if char and char:FindFirstChild("Humanoid") then
@@ -193,26 +181,10 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- SCAN
-task.spawn(function()
-    while true do
-        if scanBtn:GetAttribute("state") then
-            local pet,part = scanPet()
-            if pet then
-                fly(part)
-                pickup(part)
-            end
-        end
-        task.wait(0.6)
-    end
-end)
---------------------------------------------------
--- 🔥 AIM LOCK VIP (GIỮ CHUỘT TRÁI MỚI AIM)
-
+-- AIM VIP (GIỮ CHUỘT TRÁI)
 local aimEnabled = false
 local holdingMouse = false
 
--- check giữ chuột trái
 UIS.InputBegan:Connect(function(i,gp)
     if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
         holdingMouse = true
@@ -225,7 +197,6 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
--- tìm target gần tâm chuột (xịn hơn)
 local function getClosestPlayer()
     local closest, dist = nil, math.huge
 
@@ -234,9 +205,7 @@ local function getClosestPlayer()
             local pos, onScreen = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
 
             if onScreen then
-                local mousePos = UIS:GetMouseLocation()
-                local diff = (Vector2.new(pos.X,pos.Y) - mousePos).Magnitude
-
+                local diff = (Vector2.new(pos.X,pos.Y) - UIS:GetMouseLocation()).Magnitude
                 if diff < dist then
                     dist = diff
                     closest = plr.Character.HumanoidRootPart
@@ -248,92 +217,36 @@ local function getClosestPlayer()
     return closest
 end
 
--- aim mượt + predict
 RunService.RenderStepped:Connect(function()
-    if not aimEnabled or not holdingMouse then return end
+    if not aimBtn:GetAttribute("state") or not holdingMouse then return end
 
     local target = getClosestPlayer()
     if target then
         local predict = target.Velocity * 0.12
-
         camera.CFrame = camera.CFrame:Lerp(
             CFrame.new(camera.CFrame.Position, target.Position + predict),
-            0.25 -- độ mượt (có thể chỉnh)
+            0.25
         )
     end
 end)
 
--- nút bật tắt
-aimBtn.MouseButton1Click:Connect(function()
-    aimEnabled = not aimEnabled
-    aimBtn.Text = "AIM "..(aimEnabled and "ON 🎯" or "OFF 🎯")
-end)
 --------------------------------------------------
--- ESP PLAYER ĐẸP (BOX + TÊN)
-local espList = {}
+-- 🔥 HOP SERVER KHÔNG TRÙNG (FIX CHUẨN)
+local visited = {}
 
-RunService.RenderStepped:Connect(function()
-    for _,v in pairs(espList) do v:Remove() end
-    espList = {}
-
-    if not espBtn:GetAttribute("state") then return end
-
-    for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = plr.Character.HumanoidRootPart
-            local pos,onscreen = camera:WorldToViewportPoint(hrp.Position)
-
-            if onscreen then
-                local text = Drawing.new("Text")
-                text.Text = plr.Name
-                text.Position = Vector2.new(pos.X, pos.Y)
-                text.Color = Color3.fromRGB(0,255,150)
-                text.Size = 16
-                text.Center = true
-                text.Outline = true
-                text.Visible = true
-
-                table.insert(espList, text)
-            end
-        end
-    end
-end)
-
---------------------------------------------------
--- AIM
-RunService.RenderStepped:Connect(function()
-    if not aimBtn:GetAttribute("state") then return end
-
-    local closest,dist=nil,math.huge
-
-    for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local pos,onscreen=camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
-            if onscreen then
-                local diff=(Vector2.new(pos.X,pos.Y)-UIS:GetMouseLocation()).Magnitude
-                if diff<dist then
-                    dist=diff
-                    closest=plr.Character.HumanoidRootPart
-                end
-            end
-        end
-    end
-
-    if closest then
-        camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
-    end
-end)
-
---------------------------------------------------
--- HOP SERVER (KHÔNG TRÙNG)
 hopBtn.MouseButton1Click:Connect(function()
     local servers = HttpService:JSONDecode(game:HttpGet(
         "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
     ))
 
     for _,s in pairs(servers.data) do
-        if s.playing < s.maxPlayers then
+        if s.playing < s.maxPlayers and not visited[s.id] then
+            visited[s.id] = true
             TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
+            break
+        end
+    end
+end)nstance(game.PlaceId, s.id)
             break
         end
     end
