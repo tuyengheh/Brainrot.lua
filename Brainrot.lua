@@ -1,4 +1,4 @@
---// PLAYER
+--// SERVICES
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UIS = game:GetService("UserInputService")
@@ -7,22 +7,42 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 
 --------------------------------------------------
--- GUI CHÍNH
+-- GUI
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "BRAINROT_UI"
 gui.ResetOnSpawn = false
 
 --------------------------------------------------
--- MAIN PANEL (PHẢI)
+-- MAIN (ĐẸP DARK)
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0,300,0,350)
-main.Position = UDim2.new(0.5,-150,0.5,-175)
-main.BackgroundColor3 = Color3.fromRGB(240,240,240)
+main.Size = UDim2.new(0,320,0,360)
+main.Position = UDim2.new(0.5,-160,0.5,-180)
+main.BackgroundColor3 = Color3.fromRGB(25,25,30)
 main.Active = true
 main.Draggable = true
 Instance.new("UICorner", main)
 
--- Nút X
+-- viền đẹp
+local stroke = Instance.new("UIStroke", main)
+stroke.Color = Color3.fromRGB(100,150,255)
+stroke.Thickness = 2
+
+--------------------------------------------------
+-- INFO PANEL
+local info = Instance.new("Frame", gui)
+info.Size = UDim2.new(0,200,0,360)
+info.Position = UDim2.new(0.5,-380,0.5,-180)
+info.BackgroundColor3 = Color3.fromRGB(25,25,30)
+Instance.new("UICorner", info)
+
+local infoText = Instance.new("TextLabel", info)
+infoText.Size = UDim2.new(1,0,1,0)
+infoText.BackgroundTransparency = 1
+infoText.TextColor3 = Color3.new(1,1,1)
+infoText.TextScaled = true
+
+--------------------------------------------------
+-- NÚT X
 local close = Instance.new("TextButton", main)
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
@@ -30,7 +50,7 @@ close.Text = "X"
 close.BackgroundColor3 = Color3.fromRGB(255,80,80)
 
 --------------------------------------------------
--- NÚT MỞ LẠI (ICON)
+-- NÚT MỞ LẠI ☯
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,60,0,60)
 toggleBtn.Position = UDim2.new(0.85,0,0.5,0)
@@ -38,55 +58,56 @@ toggleBtn.Text = "☯"
 toggleBtn.Visible = false
 
 --------------------------------------------------
--- INFO PANEL (TRÁI)
-local info = Instance.new("Frame", gui)
-info.Size = UDim2.new(0,200,0,350)
-info.Position = UDim2.new(0.5,-360,0.5,-175)
-info.BackgroundColor3 = Color3.fromRGB(240,240,240)
-Instance.new("UICorner", info)
-
-local infoText = Instance.new("TextLabel", info)
-infoText.Size = UDim2.new(1,0,1,0)
-infoText.BackgroundTransparency = 1
-infoText.TextScaled = true
-infoText.Text = "INFO"
-
---------------------------------------------------
 -- INPUT
 local input = Instance.new("TextBox", main)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,50)
 input.PlaceholderText = "Nhập tên pet..."
+input.BackgroundColor3 = Color3.fromRGB(40,40,45)
+input.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", input)
 
 --------------------------------------------------
--- TOGGLE BUTTON
+-- TOGGLE ĐẸP
 local function toggle(txt,y)
     local btn = Instance.new("TextButton", main)
     btn.Size = UDim2.new(0.8,0,0,40)
     btn.Position = UDim2.new(0.1,0,0,y)
     btn.Text = txt.." OFF"
-    btn.BackgroundColor3 = Color3.fromRGB(200,200,200)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,45)
+    btn.TextColor3 = Color3.new(1,1,1)
+
+    Instance.new("UICorner", btn)
 
     local state = false
 
     btn.MouseButton1Click:Connect(function()
         state = not state
         btn.Text = txt.." "..(state and "ON" or "OFF")
-        btn.BackgroundColor3 = state and Color3.fromRGB(100,255,100) or Color3.fromRGB(200,200,200)
+        btn.BackgroundColor3 = state and Color3.fromRGB(0,170,255) or Color3.fromRGB(40,40,45)
         btn:SetAttribute("state", state)
     end)
 
     return btn
 end
 
+-- BUTTON
 local farmBtn = toggle("AUTO FARM 🤖",100)
 local scanBtn = toggle("SCAN + NHẶT 🔍",150)
 local espBtn  = toggle("ESP PLAYER 👁",200)
 local aimBtn  = toggle("AIM 🎯",250)
-local hopBtn  = toggle("HOP SERVER 📦",300)
+
+-- HOP = BUTTON THƯỜNG
+local hopBtn = Instance.new("TextButton", main)
+hopBtn.Size = UDim2.new(0.8,0,0,40)
+hopBtn.Position = UDim2.new(0.1,0,0,300)
+hopBtn.Text = "HOP SERVER ⚡"
+hopBtn.BackgroundColor3 = Color3.fromRGB(100,100,255)
+hopBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", hopBtn)
 
 --------------------------------------------------
--- GUI TOGGLE
+-- TOGGLE GUI
 close.MouseButton1Click:Connect(function()
     main.Visible = false
     info.Visible = false
@@ -112,13 +133,12 @@ end)
 RunService.RenderStepped:Connect(function()
     local char = player.Character
     if char and char:FindFirstChild("Humanoid") then
-        local hp = math.floor(char.Humanoid.Health)
-        infoText.Text = player.Name.."\nHP: "..hp
+        infoText.Text = player.Name.."\nHP: "..math.floor(char.Humanoid.Health)
     end
 end)
 
 --------------------------------------------------
--- SCAN PET
+-- SCAN
 local function scanPet()
     local keyword = string.lower(input.Text)
 
@@ -148,7 +168,7 @@ local function fly(part)
 end
 
 --------------------------------------------------
--- AUTO PICKUP
+-- PICKUP
 local function pickup(part)
     for _,v in pairs(part:GetDescendants()) do
         if v:IsA("ProximityPrompt") then
@@ -158,7 +178,7 @@ local function pickup(part)
 end
 
 --------------------------------------------------
--- AUTO FARM LOOP
+-- AUTO FARM
 task.spawn(function()
     while true do
         if farmBtn:GetAttribute("state") then
@@ -173,7 +193,7 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- SCAN BUTTON
+-- SCAN
 task.spawn(function()
     while true do
         if scanBtn:GetAttribute("state") then
@@ -188,33 +208,38 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- ESP PLAYER (DÂY TRẮNG)
-local esp = {}
+-- ESP PLAYER ĐẸP (BOX + TÊN)
+local espList = {}
 
 RunService.RenderStepped:Connect(function()
-    if not espBtn:GetAttribute("state") then
-        for _,l in pairs(esp) do l:Remove() end
-        esp = {}
-        return
-    end
+    for _,v in pairs(espList) do v:Remove() end
+    espList = {}
+
+    if not espBtn:GetAttribute("state") then return end
 
     for _,plr in pairs(game.Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = plr.Character.HumanoidRootPart
-            local line = Drawing.new("Line")
-            line.From = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
-            local pos,_ = camera:WorldToViewportPoint(hrp.Position)
-            line.To = Vector2.new(pos.X,pos.Y)
-            line.Color = Color3.new(1,1,1)
-            line.Thickness = 1
-            line.Visible = true
-            table.insert(esp,line)
+            local pos,onscreen = camera:WorldToViewportPoint(hrp.Position)
+
+            if onscreen then
+                local text = Drawing.new("Text")
+                text.Text = plr.Name
+                text.Position = Vector2.new(pos.X, pos.Y)
+                text.Color = Color3.fromRGB(0,255,150)
+                text.Size = 16
+                text.Center = true
+                text.Outline = true
+                text.Visible = true
+
+                table.insert(espList, text)
+            end
         end
     end
 end)
 
 --------------------------------------------------
--- AIM LOCK XỊN
+-- AIM
 RunService.RenderStepped:Connect(function()
     if not aimBtn:GetAttribute("state") then return end
 
@@ -234,12 +259,12 @@ RunService.RenderStepped:Connect(function()
     end
 
     if closest then
-        camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position + closest.Velocity*0.1)
+        camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
     end
 end)
 
 --------------------------------------------------
--- HOP SERVER KHÁC
+-- HOP SERVER (KHÔNG TRÙNG)
 hopBtn.MouseButton1Click:Connect(function()
     local servers = HttpService:JSONDecode(game:HttpGet(
         "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
