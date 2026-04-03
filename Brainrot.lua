@@ -1,4 +1,92 @@
---// SERVICES
+--// INTRO ANIME PREMIUM
+
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+
+-- GUI
+local intro = Instance.new("ScreenGui", game.CoreGui)
+intro.Name = "INTRO_ANIME"
+intro.IgnoreGuiInset = true
+
+local bg = Instance.new("Frame", intro)
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundColor3 = Color3.fromRGB(10,10,15)
+
+-- LOGO TEXT
+local title = Instance.new("TextLabel", bg)
+title.Size = UDim2.new(1,0,0.2,0)
+title.Position = UDim2.new(0,0,0.35,0)
+title.Text = "✨ TIENHUB ✨"
+title.TextScaled = true
+title.Font = Enum.Font.GothamBlack
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.BackgroundTransparency = 1
+title.TextTransparency = 1
+
+-- USER NAME
+local user = Instance.new("TextLabel", bg)
+user.Size = UDim2.new(1,0,0.1,0)
+user.Position = UDim2.new(0,0,0.55,0)
+user.Text = "User: "..game.Players.LocalPlayer.Name
+user.TextScaled = true
+user.Font = Enum.Font.GothamBold
+user.TextColor3 = Color3.fromRGB(0,170,255)
+user.BackgroundTransparency = 1
+user.TextTransparency = 1
+
+-- LOADING BAR
+local barBG = Instance.new("Frame", bg)
+barBG.Size = UDim2.new(0.4,0,0.02,0)
+barBG.Position = UDim2.new(0.3,0,0.7,0)
+barBG.BackgroundColor3 = Color3.fromRGB(40,40,50)
+Instance.new("UICorner", barBG)
+
+local bar = Instance.new("Frame", barBG)
+bar.Size = UDim2.new(0,0,1,0)
+bar.BackgroundColor3 = Color3.fromRGB(0,170,255)
+Instance.new("UICorner", bar)
+
+-- SOUND (anime vibe)
+local sound = Instance.new("Sound", SoundService)
+sound.SoundId = "rbxassetid://1843520824" -- anime whoosh
+sound.Volume = 2
+sound:Play()
+
+-- EFFECT: FADE IN TEXT
+TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 0}):Play()
+TweenService:Create(user, TweenInfo.new(1.2), {TextTransparency = 0}):Play()
+
+-- LOADING ANIMATION
+TweenService:Create(bar, TweenInfo.new(2.5, Enum.EasingStyle.Sine), {
+    Size = UDim2.new(1,0,1,0)
+}):Play()
+
+-- GLOW EFFECT (nhấp nháy anime)
+task.spawn(function()
+    while intro.Parent do
+        title.TextColor3 = Color3.fromHSV(tick()%5/5,1,1)
+        task.wait()
+    end
+end)
+
+-- END INTRO
+task.wait(3)
+
+TweenService:Create(bg, TweenInfo.new(1), {
+    BackgroundTransparency = 1
+}):Play()
+
+TweenService:Create(title, TweenInfo.new(1), {
+    TextTransparency = 1
+}):Play()
+
+TweenService:Create(user, TweenInfo.new(1), {
+    TextTransparency = 1
+}):Play()
+
+task.wait(1)
+intro:Destroy()
+
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UIS = game:GetService("UserInputService")
