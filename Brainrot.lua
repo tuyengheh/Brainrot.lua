@@ -224,44 +224,40 @@ task.spawn(function()
         task.wait(0.6)
     end
 end)
-
 --------------------------------------------------
--- AIM (FIX CHUẨN)
-local holding=false
+-- AIM LOCK XỊN (FIX KHÔNG BỊ DÍ)
+local holding = false
+local aimRange = 4000 -- bạn có thể chỉnh 2000-4000
 
 UIS.InputBegan:Connect(function(i,gp)
-    if not gp and i.UserInputType==Enum.UserInputType.MouseButton1 then
-        holding=true
+    if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
+        holding = true
     end
 end)
 
 UIS.InputEnded:Connect(function(i)
-    if i.UserInputType==Enum.UserInputType.MouseButton1 then
-        holding=false
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
+        holding = false
     end
 end)
 
-UIS.TouchStarted:Connect(function()
-    holding=true
-end)
-
-UIS.TouchEnded:Connect(function()
-    holding=false
-end)
-
+-- tìm target gần nhất trong range
 local function getClosest()
-    local closest,dist=nil,math.huge
+    local closest = nil
+    local dist = aimRange
 
     for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp=plr.Character.HumanoidRootPart
-            local pos,vis=camera:WorldToViewportPoint(hrp.Position)
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = plr.Character.HumanoidRootPart
 
-            if vis then
-                local diff=(Vector2.new(pos.X,pos.Y)-UIS:GetMouseLocation()).Magnitude
-                if diff<dist then
-                    dist=diff
-                    closest=hrp
+            local myChar = player.Character
+            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                local myPos = myChar.HumanoidRootPart.Position
+                local d = (myPos - hrp.Position).Magnitude
+
+                if d < dist then
+                    dist = d
+                    closest = hrp
                 end
             end
         end
@@ -270,18 +266,20 @@ local function getClosest()
     return closest
 end
 
+-- LOCK CỨNG
 RunService.RenderStepped:Connect(function()
     if aimBtn:GetAttribute("state") and holding then
-        local t=getClosest()
-        if t then
-            camera.CFrame=camera.CFrame:Lerp(
-                CFrame.new(camera.CFrame.Position,t.Position),
-                0.25
+        local target = getClosest()
+
+        if target then
+            -- khóa thẳng không lerp
+            camera.CFrame = CFrame.new(
+                camera.CFrame.Position,
+                target.Position
             )
         end
     end
-end)
-
+end
 --------------------------------------------------
 -- ESP
 local espList={}
