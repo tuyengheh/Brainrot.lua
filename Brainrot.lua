@@ -1,4 +1,4 @@
--- LOAD GAME (FIX INTRO)
+-- LOAD
 repeat task.wait() until game:IsLoaded()
 
 local TweenService = game:GetService("TweenService")
@@ -17,23 +17,13 @@ local title = Instance.new("TextLabel", bg)
 title.Size = UDim2.new(1,0,0.2,0)
 title.Position = UDim2.new(0,0,0.35,0)
 title.Text = "✨ TIENHUB ✨"
-title.Font = Enum.Font.GothamBlack
 title.TextScaled = true
 title.BackgroundTransparency = 1
 title.TextTransparency = 1
 
-local user = Instance.new("TextLabel", bg)
-user.Size = UDim2.new(1,0,0.1,0)
-user.Position = UDim2.new(0,0,0.55,0)
-user.Text = "Welcome: "..game.Players.LocalPlayer.Name
-user.TextScaled = true
-user.BackgroundTransparency = 1
-user.TextTransparency = 1
-
 TweenService:Create(title,TweenInfo.new(1),{TextTransparency=0}):Play()
-TweenService:Create(user,TweenInfo.new(1.2),{TextTransparency=0}):Play()
 
-task.wait(3)
+task.wait(2.5)
 
 TweenService:Create(bg,TweenInfo.new(1),{BackgroundTransparency=1}):Play()
 task.wait(1)
@@ -60,17 +50,13 @@ local function playSound(id)
 end
 
 --------------------------------------------------
--- SPAWN SAVE
+-- SPAWN
 local spawnCF
 local function setSpawn()
     local char = player.Character or player.CharacterAdded:Wait()
     spawnCF = char:WaitForChild("HumanoidRootPart").CFrame
 end
 setSpawn()
-player.CharacterAdded:Connect(function()
-    task.wait(1)
-    setSpawn()
-end)
 
 --------------------------------------------------
 -- NOCLIP
@@ -96,9 +82,12 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
--- GUI
+-- GUI ROOT
 local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "TIENHUB_UI"
 
+--------------------------------------------------
+-- MAIN
 local main = Instance.new("Frame", gui)
 main.Size = UDim2.new(0,320,0,420)
 main.Position = UDim2.new(0.5,-160,0.5,-210)
@@ -108,7 +97,77 @@ main.Draggable = true
 Instance.new("UICorner", main)
 
 --------------------------------------------------
--- TOGGLE BUTTON FUNCTION
+-- INFO PANEL (FIX CHUẨN)
+local info = Instance.new("Frame", gui)
+info.Size = UDim2.new(0,200,0,420)
+info.Position = UDim2.new(0.5,-380,0.5,-210)
+info.BackgroundColor3 = Color3.fromRGB(25,25,30)
+Instance.new("UICorner", info)
+
+local infoText = Instance.new("TextLabel", info)
+infoText.Size = UDim2.new(1,0,1,0)
+infoText.BackgroundTransparency = 1
+infoText.TextColor3 = Color3.new(1,1,1)
+infoText.TextScaled = true
+
+--------------------------------------------------
+-- ☯ TOGGLE BUTTON (FIX)
+local toggleBtn = Instance.new("TextButton", gui)
+toggleBtn.Size = UDim2.new(0,60,0,60)
+toggleBtn.Position = UDim2.new(0.85,0,0.5,0)
+toggleBtn.Text = "☯"
+toggleBtn.TextScaled = true
+toggleBtn.Visible = false
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,50)
+Instance.new("UICorner", toggleBtn)
+
+--------------------------------------------------
+-- CLOSE
+local close = Instance.new("TextButton", main)
+close.Size = UDim2.new(0,30,0,30)
+close.Position = UDim2.new(1,-35,0,5)
+close.Text = "X"
+close.BackgroundColor3 = Color3.fromRGB(255,80,80)
+
+--------------------------------------------------
+-- TOGGLE GUI (FIX)
+close.MouseButton1Click:Connect(function()
+    playSound(6026984223)
+    main.Visible = false
+    info.Visible = false
+    toggleBtn.Visible = true
+end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+    playSound(6026984224)
+    main.Visible = true
+    info.Visible = true
+    toggleBtn.Visible = false
+end)
+
+UIS.InputBegan:Connect(function(i,gp)
+    if not gp and i.KeyCode == Enum.KeyCode.K then
+        local state = not main.Visible
+        main.Visible = state
+        info.Visible = state
+        toggleBtn.Visible = not state
+    end
+end)
+
+--------------------------------------------------
+-- INFO UPDATE (FIX)
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        infoText.Text =
+            "👤 "..player.Name..
+            "\n❤️ HP: "..math.floor(char.Humanoid.Health)..
+            "\n⚡ Speed: "..speed
+    end
+end)
+
+--------------------------------------------------
+-- BUTTON
 local function toggle(txt,y)
     local b = Instance.new("TextButton", main)
     b.Size = UDim2.new(0.8,0,0,40)
@@ -175,7 +234,7 @@ UIS.InputChanged:Connect(function(i)
 end)
 
 --------------------------------------------------
--- ESP FIX
+-- ESP (FIX KHÔNG MẤT)
 local esp = {}
 
 RunService.RenderStepped:Connect(function()
@@ -189,7 +248,7 @@ RunService.RenderStepped:Connect(function()
             local hrp = plr.Character.HumanoidRootPart
 
             local bill = Instance.new("BillboardGui", game.CoreGui)
-            bill.Size = UDim2.new(0,100,0,40)
+            bill.Size = UDim2.new(0,120,0,40)
             bill.Adornee = hrp
             bill.AlwaysOnTop = true
 
