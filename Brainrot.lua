@@ -1,4 +1,111 @@
---// SERVICES
+--// INTRO ANIME PREMIUM XỊN
+
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+
+local intro = Instance.new("ScreenGui", game.CoreGui)
+intro.IgnoreGuiInset = true
+intro.Name = "INTRO_PREMIUM"
+
+-- BACKGROUND
+local bg = Instance.new("Frame", intro)
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundColor3 = Color3.fromRGB(10,10,15)
+
+-- GRADIENT (anime vibe)
+local grad = Instance.new("UIGradient", bg)
+grad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(30,0,60))
+}
+
+-- TITLE
+local title = Instance.new("TextLabel", bg)
+title.Size = UDim2.new(1,0,0.2,0)
+title.Position = UDim2.new(0,0,0.35,0)
+title.Text = "✨ TIENHUB ✨"
+title.Font = Enum.Font.GothamBlack
+title.TextScaled = true
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextTransparency = 1
+
+-- USER
+local user = Instance.new("TextLabel", bg)
+user.Size = UDim2.new(1,0,0.1,0)
+user.Position = UDim2.new(0,0,0.55,0)
+user.Text = "Welcome: "..game.Players.LocalPlayer.Name
+user.Font = Enum.Font.GothamBold
+user.TextScaled = true
+user.BackgroundTransparency = 1
+user.TextColor3 = Color3.fromRGB(0,170,255)
+user.TextTransparency = 1
+
+-- LOADING TEXT
+local loading = Instance.new("TextLabel", bg)
+loading.Size = UDim2.new(1,0,0.05,0)
+loading.Position = UDim2.new(0,0,0.65,0)
+loading.Text = "Loading..."
+loading.TextScaled = true
+loading.BackgroundTransparency = 1
+loading.TextColor3 = Color3.fromRGB(200,200,200)
+
+-- BAR
+local barBG = Instance.new("Frame", bg)
+barBG.Size = UDim2.new(0.4,0,0.02,0)
+barBG.Position = UDim2.new(0.3,0,0.72,0)
+barBG.BackgroundColor3 = Color3.fromRGB(40,40,50)
+Instance.new("UICorner", barBG)
+
+local bar = Instance.new("Frame", barBG)
+bar.Size = UDim2.new(0,0,1,0)
+bar.BackgroundColor3 = Color3.fromRGB(0,170,255)
+Instance.new("UICorner", bar)
+
+-- SOUND (anime swoosh)
+local sound = Instance.new("Sound", SoundService)
+sound.SoundId = "rbxassetid://1843520824"
+sound.Volume = 2
+sound:Play()
+
+-- FADE IN
+TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 0}):Play()
+TweenService:Create(user, TweenInfo.new(1.2), {TextTransparency = 0}):Play()
+
+-- LOADING BAR
+TweenService:Create(bar, TweenInfo.new(3, Enum.EasingStyle.Sine), {
+    Size = UDim2.new(1,0,1,0)
+}):Play()
+
+-- TEXT ANIMATION (loading ...)
+task.spawn(function()
+    while intro.Parent do
+        for i=1,3 do
+            loading.Text = "Loading"..string.rep(".",i)
+            task.wait(0.4)
+        end
+    end
+end)
+
+-- RAINBOW TITLE 🌈
+task.spawn(function()
+    while intro.Parent do
+        title.TextColor3 = Color3.fromHSV((tick()%5)/5,1,1)
+        task.wait()
+    end
+end)
+
+-- END
+task.wait(3.5)
+
+TweenService:Create(bg, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
+TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 1}):Play()
+TweenService:Create(user, TweenInfo.new(1), {TextTransparency = 1}):Play()
+TweenService:Create(loading, TweenInfo.new(1), {TextTransparency = 1}):Play()
+
+task.wait(1)
+intro:Destroy()
+
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UIS = game:GetService("UserInputService")
