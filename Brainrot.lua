@@ -1,92 +1,4 @@
---// INTRO ANIME PREMIUM
-
-local TweenService = game:GetService("TweenService")
-local SoundService = game:GetService("SoundService")
-
--- GUI
-local intro = Instance.new("ScreenGui", game.CoreGui)
-intro.Name = "INTRO_ANIME"
-intro.IgnoreGuiInset = true
-
-local bg = Instance.new("Frame", intro)
-bg.Size = UDim2.new(1,0,1,0)
-bg.BackgroundColor3 = Color3.fromRGB(10,10,15)
-
--- LOGO TEXT
-local title = Instance.new("TextLabel", bg)
-title.Size = UDim2.new(1,0,0.2,0)
-title.Position = UDim2.new(0,0,0.35,0)
-title.Text = "✨ TIENHUB ✨"
-title.TextScaled = true
-title.Font = Enum.Font.GothamBlack
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.BackgroundTransparency = 1
-title.TextTransparency = 1
-
--- USER NAME
-local user = Instance.new("TextLabel", bg)
-user.Size = UDim2.new(1,0,0.1,0)
-user.Position = UDim2.new(0,0,0.55,0)
-user.Text = "User: "..game.Players.LocalPlayer.Name
-user.TextScaled = true
-user.Font = Enum.Font.GothamBold
-user.TextColor3 = Color3.fromRGB(0,170,255)
-user.BackgroundTransparency = 1
-user.TextTransparency = 1
-
--- LOADING BAR
-local barBG = Instance.new("Frame", bg)
-barBG.Size = UDim2.new(0.4,0,0.02,0)
-barBG.Position = UDim2.new(0.3,0,0.7,0)
-barBG.BackgroundColor3 = Color3.fromRGB(40,40,50)
-Instance.new("UICorner", barBG)
-
-local bar = Instance.new("Frame", barBG)
-bar.Size = UDim2.new(0,0,1,0)
-bar.BackgroundColor3 = Color3.fromRGB(0,170,255)
-Instance.new("UICorner", bar)
-
--- SOUND (anime vibe)
-local sound = Instance.new("Sound", SoundService)
-sound.SoundId = "rbxassetid://1843520824" -- anime whoosh
-sound.Volume = 2
-sound:Play()
-
--- EFFECT: FADE IN TEXT
-TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 0}):Play()
-TweenService:Create(user, TweenInfo.new(1.2), {TextTransparency = 0}):Play()
-
--- LOADING ANIMATION
-TweenService:Create(bar, TweenInfo.new(2.5, Enum.EasingStyle.Sine), {
-    Size = UDim2.new(1,0,1,0)
-}):Play()
-
--- GLOW EFFECT (nhấp nháy anime)
-task.spawn(function()
-    while intro.Parent do
-        title.TextColor3 = Color3.fromHSV(tick()%5/5,1,1)
-        task.wait()
-    end
-end)
-
--- END INTRO
-task.wait(3)
-
-TweenService:Create(bg, TweenInfo.new(1), {
-    BackgroundTransparency = 1
-}):Play()
-
-TweenService:Create(title, TweenInfo.new(1), {
-    TextTransparency = 1
-}):Play()
-
-TweenService:Create(user, TweenInfo.new(1), {
-    TextTransparency = 1
-}):Play()
-
-task.wait(1)
-intro:Destroy()
-
+--// SERVICES
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UIS = game:GetService("UserInputService")
@@ -94,6 +6,7 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
 
 --------------------------------------------------
 -- SOUND
@@ -133,7 +46,7 @@ RunService.Stepped:Connect(function()
 end)
 
 --------------------------------------------------
--- SPEED
+-- SPEED (FIX KHÔNG BỊ CHẬM)
 local speed = 16
 RunService.RenderStepped:Connect(function()
     local char = player.Character
@@ -151,18 +64,18 @@ gui.ResetOnSpawn = false
 --------------------------------------------------
 -- MAIN
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0,320,0,400)
-main.Position = UDim2.new(0.5,-160,0.5,-200)
+main.Size = UDim2.new(0,320,0,420)
+main.Position = UDim2.new(0.5,-160,0.5,-210)
 main.BackgroundColor3 = Color3.fromRGB(30,30,35)
 main.Active = true
 main.Draggable = true
 Instance.new("UICorner", main)
 
 --------------------------------------------------
--- INFO PANEL
+-- INFO
 local info = Instance.new("Frame", gui)
-info.Size = UDim2.new(0,200,0,400)
-info.Position = UDim2.new(0.5,-380,0.5,-200)
+info.Size = UDim2.new(0,200,0,420)
+info.Position = UDim2.new(0.5,-380,0.5,-210)
 info.BackgroundColor3 = Color3.fromRGB(30,30,35)
 Instance.new("UICorner", info)
 
@@ -196,7 +109,7 @@ input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
 
 --------------------------------------------------
--- BUTTON
+-- TOGGLE BUTTON
 local function toggle(txt,y)
     local btn = Instance.new("TextButton", main)
     btn.Size = UDim2.new(0.8,0,0,40)
@@ -226,42 +139,76 @@ local espBtn  = toggle("ESP 👁",250)
 local noclipBtn = toggle("NOCLIP 🚶",300)
 
 --------------------------------------------------
--- HOP
-local hopBtn = Instance.new("TextButton", main)
-hopBtn.Size = UDim2.new(0.8,0,0,40)
-hopBtn.Position = UDim2.new(0.1,0,0,350)
-hopBtn.Text = "HOP SERVER ⚡"
+-- SPEED SLIDER 🔥
+local slider = Instance.new("Frame", main)
+slider.Size = UDim2.new(0.8,0,0,30)
+slider.Position = UDim2.new(0.1,0,0,350)
+slider.BackgroundColor3 = Color3.fromRGB(45,45,50)
+Instance.new("UICorner", slider)
+
+local bar = Instance.new("Frame", slider)
+bar.Size = UDim2.new(0,0,1,0)
+bar.BackgroundColor3 = Color3.fromRGB(0,170,255)
+Instance.new("UICorner", bar)
+
+local dragging = false
+
+slider.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+    end
+end)
+
+slider.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UIS.InputChanged:Connect(function(i)
+    if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+        local x = math.clamp((i.Position.X - slider.AbsolutePosition.X)/slider.AbsoluteSize.X,0,1)
+        bar.Size = UDim2.new(x,0,1,0)
+        speed = math.floor(x * 200)
+    end
+end)
 
 --------------------------------------------------
 -- GUI TOGGLE
 close.MouseButton1Click:Connect(function()
-    playSound(6026984223)
-    main.Visible = false
-    info.Visible = false
-    toggleBtn.Visible = true
+    main.Visible=false
+    info.Visible=false
+    toggleBtn.Visible=true
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
-    playSound(6026984224)
-    main.Visible = true
-    info.Visible = true
-    toggleBtn.Visible = false
+    main.Visible=true
+    info.Visible=true
+    toggleBtn.Visible=false
 end)
 
 --------------------------------------------------
--- NOCLIP BTN
-noclipBtn.MouseButton1Click:Connect(function()
-    noclip = noclipBtn:GetAttribute("state")
-end)
-
---------------------------------------------------
--- INFO UPDATE
+-- INFO
 RunService.RenderStepped:Connect(function()
     local char = player.Character
     if char and char:FindFirstChild("Humanoid") then
         infoText.Text = player.Name.." | HP: "..math.floor(char.Humanoid.Health)
     end
 end)
+
+--------------------------------------------------
+-- FLY (MƯỢT + ANTI KICK)
+local function fly(cf)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    noclip = true
+    for i=1,50 do
+        hrp.CFrame = hrp.CFrame:Lerp(cf,0.08)
+        task.wait(0.03)
+    end
+    noclip = false
+end
 
 --------------------------------------------------
 -- SCAN
@@ -278,39 +225,18 @@ local function scanPet()
 end
 
 --------------------------------------------------
--- FLY (CHẬM + ANTI KICK)
-local function fly(cf)
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    noclip = true
-    for i=1,60 do
-        hrp.CFrame = hrp.CFrame:Lerp(cf,0.05)
-        task.wait(0.05)
-    end
-    noclip = false
-end
-
---------------------------------------------------
 -- PICKUP
 local function pickup(part)
-    local picked = false
-
     for _,v in pairs(part:GetDescendants()) do
         if v:IsA("ProximityPrompt") then
             fireproximityprompt(v)
-            picked = true
-            task.wait(0.1)
         end
     end
-
-    if picked then
-        playSound(9114487369)
-    end
+    playSound(9114487369)
 end
 
 --------------------------------------------------
--- SCAN + NHẶT + VỀ SPAWN
+-- SCAN LOOP
 task.spawn(function()
     while true do
         if scanBtn:GetAttribute("state") then
@@ -318,7 +244,7 @@ task.spawn(function()
             if pet then
                 fly(CFrame.new(part.Position + Vector3.new(0,3,0)))
                 pickup(part)
-                task.wait(0.5)
+                task.wait(0.4)
                 if spawnCF then
                     fly(spawnCF)
                 end
@@ -343,7 +269,7 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- AIM (GIỮ NGUYÊN XỊN)
+-- AIM (GIỮ NGUYÊN VIP)
 local holding=false
 
 UIS.InputBegan:Connect(function(i,gp)
@@ -388,44 +314,44 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
--- ESP (BOX + HP + DIST)
-local espList = {}
+-- ESP FIX 100%
+local espList={}
 
 RunService.RenderStepped:Connect(function()
-    for _,v in pairs(espList) do if v then v:Destroy() end end
-    espList = {}
+    for _,v in pairs(espList) do v:Destroy() end
+    espList={}
 
     if not espBtn:GetAttribute("state") then return end
 
     for _,plr in pairs(game.Players:GetPlayers()) do
         if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local char = plr.Character
-            local hrp = char.HumanoidRootPart
-            local hum = char:FindFirstChild("Humanoid")
+            local char=plr.Character
+            local hrp=char.HumanoidRootPart
+            local hum=char:FindFirstChild("Humanoid")
 
-            local box = Instance.new("BoxHandleAdornment")
-            box.Adornee = char
-            box.Size = Vector3.new(4,6,2)
-            box.AlwaysOnTop = true
-            box.Color3 = Color3.new(1,1,1)
-            box.Parent = game.CoreGui
+            local box=Instance.new("BoxHandleAdornment")
+            box.Adornee=char
+            box.Size=Vector3.new(4,6,2)
+            box.AlwaysOnTop=true
+            box.Color3=Color3.new(1,1,1)
+            box.Parent=game.CoreGui
 
-            local bill = Instance.new("BillboardGui",game.CoreGui)
-            bill.Size = UDim2.new(0,120,0,40)
-            bill.Adornee = hrp
-            bill.AlwaysOnTop = true
+            local dist=(player.Character.HumanoidRootPart.Position-hrp.Position).Magnitude
 
-            local txt = Instance.new("TextLabel",bill)
-            txt.Size = UDim2.new(1,0,1,0)
-            txt.BackgroundTransparency = 1
-            txt.TextColor3 = Color3.new(1,1,1)
-            txt.TextScaled = true
+            local bill=Instance.new("BillboardGui",game.CoreGui)
+            bill.Size=UDim2.new(0,120,0,40)
+            bill.Adornee=hrp
+            bill.AlwaysOnTop=true
 
-            local dist = (player.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-            txt.Text = plr.Name.." | "..math.floor(hum.Health).." ["..math.floor(dist).."]"
+            local txt=Instance.new("TextLabel",bill)
+            txt.Size=UDim2.new(1,0,1,0)
+            txt.BackgroundTransparency=1
+            txt.TextColor3=Color3.new(1,1,1)
+            txt.TextScaled=true
+            txt.Text=plr.Name.." | "..math.floor(hum.Health).." ["..math.floor(dist).."]"
 
-            table.insert(espList, box)
-            table.insert(espList, bill)
+            table.insert(espList,box)
+            table.insert(espList,bill)
         end
     end
 end)
@@ -433,8 +359,6 @@ end)
 --------------------------------------------------
 -- HOP SERVER
 hopBtn.MouseButton1Click:Connect(function()
-    playSound(9118828564)
-
     local data = HttpService:JSONDecode(game:HttpGet(
         "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
     ))
