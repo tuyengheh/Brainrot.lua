@@ -1,6 +1,8 @@
 repeat task.wait() until game:IsLoaded()
+task.wait(1)
 
 local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -8,9 +10,8 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 
 --------------------------------------------------
--- INTRO (FIX CHẮC CHẮN HIỆN)
-local intro = Instance.new("ScreenGui")
-intro.Parent = gethui and gethui() or game.CoreGui
+-- INTRO (FIX 100%)
+local intro = Instance.new("ScreenGui", gethui and gethui() or game.CoreGui)
 intro.IgnoreGuiInset = true
 
 local bg = Instance.new("Frame", intro)
@@ -25,16 +26,15 @@ title.TextScaled = true
 title.BackgroundTransparency = 1
 title.TextTransparency = 1
 
-TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 0}):Play()
+TweenService:Create(title, TweenInfo.new(0.8), {TextTransparency = 0}):Play()
 task.wait(2)
-TweenService:Create(bg, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
+TweenService:Create(bg, TweenInfo.new(0.8), {BackgroundTransparency = 1}):Play()
 task.wait(1)
 intro:Destroy()
 
 --------------------------------------------------
 -- GUI ROOT
-local gui = Instance.new("ScreenGui")
-gui.Parent = gethui and gethui() or game.CoreGui
+local gui = Instance.new("ScreenGui", gethui and gethui() or game.CoreGui)
 
 --------------------------------------------------
 -- MAIN
@@ -47,7 +47,7 @@ main.Draggable = true
 Instance.new("UICorner", main)
 
 --------------------------------------------------
--- ☯ BUTTON (FIX)
+-- ☯ TOGGLE
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,60,0,60)
 toggleBtn.Position = UDim2.new(0.88,0,0.5,0)
@@ -81,7 +81,7 @@ input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
 
 --------------------------------------------------
--- SPEED (SLIDER XỊN)
+-- SPEED SLIDER (FIX MOBILE)
 local speed = 16
 
 local slider = Instance.new("Frame", main)
@@ -97,9 +97,16 @@ Instance.new("UICorner", fill)
 
 local dragging = false
 
+local function updateSlider(xPos)
+    local x = math.clamp((xPos - slider.AbsolutePosition.X)/slider.AbsoluteSize.X,0,1)
+    fill.Size = UDim2.new(x,0,1,0)
+    speed = math.floor(x*200)
+end
+
 slider.InputBegan:Connect(function(i)
     if i.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
+        updateSlider(i.Position.X)
     end
 end)
 
@@ -111,9 +118,14 @@ end)
 
 UIS.InputChanged:Connect(function(i)
     if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-        local x = math.clamp((i.Position.X - slider.AbsolutePosition.X)/slider.AbsoluteSize.X,0,1)
-        fill.Size = UDim2.new(x,0,1,0)
-        speed = math.floor(x*200)
+        updateSlider(i.Position.X)
+    end
+end)
+
+-- MOBILE
+UIS.TouchMoved:Connect(function(i)
+    if dragging then
+        updateSlider(i.Position.X)
     end
 end)
 
@@ -128,7 +140,6 @@ end)
 -- INFO
 local info = Instance.new("TextLabel", main)
 info.Size = UDim2.new(1,0,0,40)
-info.Position = UDim2.new(0,0,0,0)
 info.BackgroundTransparency = 1
 info.TextColor3 = Color3.new(1,1,1)
 info.TextScaled = true
@@ -165,6 +176,7 @@ end
 local farmBtn = toggle("AUTO FARM",100)
 local scanBtn = toggle("SCAN",150)
 local espBtn  = toggle("ESP",200)
+local aimBtn  = toggle("AIM",250)
 
 --------------------------------------------------
 -- SCAN
@@ -195,7 +207,7 @@ local function fly(part)
 end
 
 --------------------------------------------------
--- FARM + SCAN
+-- FARM
 task.spawn(function()
     while true do
         if farmBtn:GetAttribute("state") or scanBtn:GetAttribute("state") then
@@ -214,12 +226,69 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
+-- AIM (FIX CHUẨN)
+local holding=false
+
+UIS.InputBegan:Connect(function(i,gp)
+    if not gp and i.UserInputType==Enum.UserInputType.MouseButton1 then
+        holding=true
+    end
+end)
+
+UIS.InputEnded:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseButton1 then
+        holding=false
+    end
+end)
+
+UIS.TouchStarted:Connect(function()
+    holding=true
+end)
+
+UIS.TouchEnded:Connect(function()
+    holding=false
+end)
+
+local function getClosest()
+    local closest,dist=nil,math.huge
+
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp=plr.Character.HumanoidRootPart
+            local pos,vis=camera:WorldToViewportPoint(hrp.Position)
+
+            if vis then
+                local diff=(Vector2.new(pos.X,pos.Y)-UIS:GetMouseLocation()).Magnitude
+                if diff<dist then
+                    dist=diff
+                    closest=hrp
+                end
+            end
+        end
+    end
+
+    return closest
+end
+
+RunService.RenderStepped:Connect(function()
+    if aimBtn:GetAttribute("state") and holding then
+        local t=getClosest()
+        if t then
+            camera.CFrame=camera.CFrame:Lerp(
+                CFrame.new(camera.CFrame.Position,t.Position),
+                0.25
+            )
+        end
+    end
+end)
+
+--------------------------------------------------
 -- ESP
-local espList = {}
+local espList={}
 
 RunService.RenderStepped:Connect(function()
     for _,v in pairs(espList) do v:Destroy() end
-    espList = {}
+    espList={}
 
     if not espBtn:GetAttribute("state") then return end
 
@@ -233,8 +302,8 @@ RunService.RenderStepped:Connect(function()
                 local box=Instance.new("BoxHandleAdornment")
                 box.Adornee=char
                 box.Size=Vector3.new(4,6,2)
-                box.AlwaysOnTop=true
                 box.Color3=Color3.new(1,1,1)
+                box.AlwaysOnTop=true
                 box.Parent=gui
 
                 local bill=Instance.new("BillboardGui",gui)
