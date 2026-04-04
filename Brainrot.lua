@@ -10,8 +10,13 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 
 --------------------------------------------------
--- INTRO (FIX 100%)
-local intro = Instance.new("ScreenGui", gethui and gethui() or game.CoreGui)
+-- GUI PARENT (FIX 100% KHÔNG MẤT MENU)
+local parentGui = gethui and gethui() or game:GetService("CoreGui")
+
+--------------------------------------------------
+-- INTRO
+local intro = Instance.new("ScreenGui")
+intro.Parent = parentGui
 intro.IgnoreGuiInset = true
 
 local bg = Instance.new("Frame", intro)
@@ -34,7 +39,10 @@ intro:Destroy()
 
 --------------------------------------------------
 -- GUI ROOT
-local gui = Instance.new("ScreenGui", gethui and gethui() or game.CoreGui)
+local gui = Instance.new("ScreenGui")
+gui.Name = "TIENHUB_UI"
+gui.Parent = parentGui
+gui.ResetOnSpawn = false
 
 --------------------------------------------------
 -- MAIN
@@ -47,11 +55,13 @@ main.Draggable = true
 Instance.new("UICorner", main)
 
 --------------------------------------------------
--- ☯ TOGGLE
+-- ☯ BUTTON
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,60,0,60)
 toggleBtn.Position = UDim2.new(0.88,0,0.5,0)
 toggleBtn.Text = "☯"
+toggleBtn.TextScaled = true
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,50)
 toggleBtn.Visible = false
 Instance.new("UICorner", toggleBtn)
 
@@ -71,7 +81,7 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- INPUT PET
+-- INPUT
 local input = Instance.new("TextBox", main)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,50)
@@ -81,7 +91,7 @@ input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
 
 --------------------------------------------------
--- SPEED SLIDER (FIX MOBILE)
+-- SPEED SLIDER
 local speed = 16
 
 local slider = Instance.new("Frame", main)
@@ -122,7 +132,6 @@ UIS.InputChanged:Connect(function(i)
     end
 end)
 
--- MOBILE
 UIS.TouchMoved:Connect(function(i)
     if dragging then
         updateSlider(i.Position.X)
@@ -224,41 +233,37 @@ task.spawn(function()
         task.wait(0.6)
     end
 end)
+
 --------------------------------------------------
--- AIM LOCK XỊN (FIX KHÔNG BỊ DÍ)
-local holding = false
-local aimRange = 4000 -- bạn có thể chỉnh 2000-4000
+-- AIM (GIỮ NGUYÊN)
+local holding=false
 
 UIS.InputBegan:Connect(function(i,gp)
-    if not gp and i.UserInputType == Enum.UserInputType.MouseButton1 then
-        holding = true
+    if not gp and i.UserInputType==Enum.UserInputType.MouseButton1 then
+        holding=true
     end
 end)
 
 UIS.InputEnded:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        holding = false
+    if i.UserInputType==Enum.UserInputType.MouseButton1 then
+        holding=false
     end
 end)
 
--- tìm target gần nhất trong range
 local function getClosest()
-    local closest = nil
-    local dist = aimRange
+    local closest,dist=nil,4000
+    local myChar=player.Character
+    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
+
+    local myPos=myChar.HumanoidRootPart.Position
 
     for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = plr.Character.HumanoidRootPart
-
-            local myChar = player.Character
-            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                local myPos = myChar.HumanoidRootPart.Position
-                local d = (myPos - hrp.Position).Magnitude
-
-                if d < dist then
-                    dist = d
-                    closest = hrp
-                end
+        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp=plr.Character.HumanoidRootPart
+            local d=(myPos-hrp.Position).Magnitude
+            if d<dist then
+                dist=d
+                closest=hrp
             end
         end
     end
@@ -266,24 +271,18 @@ local function getClosest()
     return closest
 end
 
--- LOCK CỨNG
 RunService.RenderStepped:Connect(function()
     if aimBtn:GetAttribute("state") and holding then
-        local target = getClosest()
-
-        if target then
-            -- khóa thẳng không lerp
-            camera.CFrame = CFrame.new(
-                camera.CFrame.Position,
-                target.Position
-            )
+        local t=getClosest()
+        if t then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, t.Position)
         end
     end
-end
+end)
+
 --------------------------------------------------
 -- ESP
 local espList={}
-
 RunService.RenderStepped:Connect(function()
     for _,v in pairs(espList) do v:Destroy() end
     espList={}
@@ -300,7 +299,6 @@ RunService.RenderStepped:Connect(function()
                 local box=Instance.new("BoxHandleAdornment")
                 box.Adornee=char
                 box.Size=Vector3.new(4,6,2)
-                box.Color3=Color3.new(1,1,1)
                 box.AlwaysOnTop=true
                 box.Parent=gui
 
@@ -312,7 +310,6 @@ RunService.RenderStepped:Connect(function()
                 local txt=Instance.new("TextLabel",bill)
                 txt.Size=UDim2.new(1,0,1,0)
                 txt.BackgroundTransparency=1
-                txt.TextColor3=Color3.new(1,1,1)
                 txt.TextScaled=true
 
                 local dist=(player.Character.HumanoidRootPart.Position-hrp.Position).Magnitude
