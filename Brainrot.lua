@@ -4,23 +4,14 @@ local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
 
 --------------------------------------------------
--- SOUND
-local function playSound(id)
-    local s = Instance.new("Sound")
-    s.SoundId = "rbxassetid://"..id
-    s.Volume = 2
-    s.Parent = SoundService
-    s:Play()
-    game.Debris:AddItem(s,2)
-end
-
---------------------------------------------------
--- GUI ROOT
+-- GUI ROOT (FIX 100%)
 local gui = Instance.new("ScreenGui")
-gui.Parent = game.CoreGui
+gui.Name = "TIENHUB_UI"
+gui.Parent = gethui and gethui() or game.CoreGui
 gui.ResetOnSpawn = false
 
 --------------------------------------------------
@@ -36,8 +27,8 @@ Instance.new("UICorner", main)
 --------------------------------------------------
 -- INFO PANEL
 local info = Instance.new("Frame", gui)
-info.Size = UDim2.new(0,200,0,420)
-info.Position = UDim2.new(0.5,-380,0.5,-210)
+info.Size = UDim2.new(0,220,0,420)
+info.Position = UDim2.new(0.5,-400,0.5,-210)
 info.BackgroundColor3 = Color3.fromRGB(25,25,30)
 Instance.new("UICorner", info)
 
@@ -48,14 +39,14 @@ infoText.TextColor3 = Color3.new(1,1,1)
 infoText.TextScaled = true
 
 --------------------------------------------------
--- ☯ BUTTON (FIX LUÔN HIỆN)
+-- ☯ BUTTON
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,60,0,60)
-toggleBtn.Position = UDim2.new(0.85,0,0.5,0)
+toggleBtn.Position = UDim2.new(0.88,0,0.5,0)
 toggleBtn.Text = "☯"
 toggleBtn.TextScaled = true
-toggleBtn.Visible = false
 toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,50)
+toggleBtn.Visible = false
 Instance.new("UICorner", toggleBtn)
 
 --------------------------------------------------
@@ -64,6 +55,7 @@ local close = Instance.new("TextButton", main)
 close.Size = UDim2.new(0,30,0,30)
 close.Position = UDim2.new(1,-35,0,5)
 close.Text = "X"
+close.BackgroundColor3 = Color3.fromRGB(255,80,80)
 
 close.MouseButton1Click:Connect(function()
     main.Visible = false
@@ -78,7 +70,7 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- INPUT PET (FIX QUAN TRỌNG 🔥)
+-- INPUT PET (QUAN TRỌNG)
 local input = Instance.new("TextBox", main)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,50)
@@ -88,18 +80,29 @@ input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
 
 --------------------------------------------------
+-- SPEED
+local speed = 16
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.WalkSpeed = speed
+    end
+end)
+
+--------------------------------------------------
 -- INFO UPDATE
 RunService.RenderStepped:Connect(function()
     local char = player.Character
     if char and char:FindFirstChild("Humanoid") then
         infoText.Text =
             "👤 "..player.Name..
-            "\n❤️ "..math.floor(char.Humanoid.Health)
+            "\n❤️ HP: "..math.floor(char.Humanoid.Health)..
+            "\n⚡ Speed: "..speed
     end
 end)
 
 --------------------------------------------------
--- TOGGLE
+-- BUTTON
 local function toggle(txt,y)
     local b = Instance.new("TextButton", main)
     b.Size = UDim2.new(0.8,0,0,40)
@@ -116,7 +119,6 @@ local function toggle(txt,y)
         b:SetAttribute("state", s)
         b.Text = txt.." "..(s and "ON" or "OFF")
         b.BackgroundColor3 = s and Color3.fromRGB(0,170,255) or Color3.fromRGB(45,45,50)
-        playSound(s and 6026984224 or 6026984223)
     end)
 
     return b
@@ -128,11 +130,33 @@ local aimBtn  = toggle("AIM 🎯",200)
 local espBtn  = toggle("ESP 👁",250)
 
 --------------------------------------------------
--- SCAN PET (FIX CÓ KEYWORD)
+-- HOP SERVER
+local hopBtn = Instance.new("TextButton", main)
+hopBtn.Size = UDim2.new(0.8,0,0,40)
+hopBtn.Position = UDim2.new(0.1,0,0,300)
+hopBtn.Text = "HOP SERVER ⚡"
+hopBtn.BackgroundColor3 = Color3.fromRGB(100,100,255)
+hopBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", hopBtn)
+
+hopBtn.MouseButton1Click:Connect(function()
+    local data = HttpService:JSONDecode(game:HttpGet(
+        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
+    ))
+
+    for _,s in pairs(data.data) do
+        if s.playing < s.maxPlayers then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
+            break
+        end
+    end
+end)
+
+--------------------------------------------------
+-- SCAN PET (FIX)
 local function scanPet()
     local keyword = string.lower(input.Text)
-
-    if keyword == "" then return nil end -- ❗ bắt buộc nhập
+    if keyword == "" then return end
 
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") then
@@ -151,21 +175,18 @@ local function fly(part)
     if not hrp then return end
 
     for i=1,40 do
-        if not part then break end
         hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(part.Position + Vector3.new(0,3,0)),0.1)
         task.wait(0.03)
     end
 end
 
 --------------------------------------------------
--- AUTO FARM
+-- FARM
 task.spawn(function()
     while true do
         if farmBtn:GetAttribute("state") then
             local pet,part = scanPet()
-            if pet then
-                fly(part)
-            end
+            if pet then fly(part) end
         end
         task.wait(0.5)
     end
@@ -191,46 +212,46 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- AIM (GIỮ NGUYÊN)
-local holding=false
-
-UIS.InputBegan:Connect(function(i,gp)
-    if not gp and i.UserInputType==Enum.UserInputType.MouseButton1 then
-        holding=true
-    end
-end)
-
-UIS.InputEnded:Connect(function(i)
-    if i.UserInputType==Enum.UserInputType.MouseButton1 then
-        holding=false
-    end
-end)
-
-local function getClosest()
-    local closest,dist=nil,math.huge
-    for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local pos,vis = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
-            if vis then
-                local d=(Vector2.new(pos.X,pos.Y)-UIS:GetMouseLocation()).Magnitude
-                if d<dist then
-                    dist=d
-                    closest=plr.Character.HumanoidRootPart
-                end
-            end
-        end
-    end
-    return closest
-end
+-- ESP (BOX + TEXT)
+local espList = {}
 
 RunService.RenderStepped:Connect(function()
-    if aimBtn:GetAttribute("state") and holding then
-        local t=getClosest()
-        if t then
-            camera.CFrame = camera.CFrame:Lerp(
-                CFrame.new(camera.CFrame.Position,t.Position),
-                0.3
-            )
+    for _,v in pairs(espList) do v:Destroy() end
+    espList = {}
+
+    if not espBtn:GetAttribute("state") then return end
+
+    for _,plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            local char = plr.Character
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChild("Humanoid")
+
+            if hrp and hum then
+                local box = Instance.new("BoxHandleAdornment")
+                box.Adornee = char
+                box.Size = Vector3.new(4,6,2)
+                box.Color3 = Color3.new(1,1,1)
+                box.AlwaysOnTop = true
+                box.Parent = gui
+
+                local bill = Instance.new("BillboardGui", gui)
+                bill.Size = UDim2.new(0,120,0,40)
+                bill.Adornee = hrp
+                bill.AlwaysOnTop = true
+
+                local txt = Instance.new("TextLabel", bill)
+                txt.Size = UDim2.new(1,0,1,0)
+                txt.BackgroundTransparency = 1
+                txt.TextColor3 = Color3.new(1,1,1)
+                txt.TextScaled = true
+
+                local dist = (player.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                txt.Text = plr.Name.." | "..math.floor(hum.Health).." ["..math.floor(dist).."]"
+
+                table.insert(espList, box)
+                table.insert(espList, bill)
+            end
         end
     end
 end)
