@@ -92,7 +92,7 @@ Instance.new("UICorner", input)
 ------------------------------
 task.spawn(function()
     while true do
-        if craftBtn:GetAttribute("state") then
+        if eventBtn:GetAttribute("state") then
 
             local char = player.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
@@ -101,28 +101,30 @@ task.spawn(function()
                 for _,v in pairs(workspace:GetDescendants()) do
                     if v:IsA("ProximityPrompt") then
                         
-                        -- LỌC ĐÚNG TÊN
-                        if v.Parent and v.Parent.Name == "Easter Base Skin" then
+                        local part = v.Parent
+                        if part and part:IsA("BasePart") then
                             
-                            local part = v.Parent
+                            local dist = (hrp.Position - part.Position).Magnitude
                             
-                            -- TELEPORT TỚI
-                            hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
-                            task.wait(0.3)
+                            -- chỉ lấy gần (tránh spam toàn map)
+                            if dist < 20 then
+                                
+                                -- debug để bạn biết nó là gì
+                                print("FOUND:", v.ObjectText, v.ActionText)
 
-                            -- BẤM E
-                            fireproximityprompt(v)
-
-                            task.wait(2) -- tránh spam
+                                fireproximityprompt(v)
+                                task.wait(0.5)
+                            end
                         end
                     end
                 end
             end
         end
 
-        task.wait(1)
+        task.wait(0.5)
     end
 end)
+                            
 --------------------------------------------------
 -- SPEED SLIDER
 local speed = 16
@@ -214,7 +216,7 @@ local function toggle(txt,y)
 
     return b
 end
-
+local eventBtn = toggle("AUTO EVENT 🥚",300)
 local farmBtn = toggle("AUTO FARM",100)
 local scanBtn = toggle("SCAN",150)
 local espBtn  = toggle("ESP",200)
