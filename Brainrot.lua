@@ -184,7 +184,7 @@ end
 
 local farmBtn = toggle("AUTO FARM",100)
 local scanBtn = toggle("ESP",150)
-local espBtn  = toggle("ESP PLAYER",200)
+local espBtn  = toggle("định vị",200)
 local aimBtn  = toggle("AIM",250)
 local openEventBtn = toggle("OPEN EVENT UI 🎁",350)
 
@@ -247,17 +247,54 @@ local function fly(part)
     end
 end
 --------------------------------------------------
--- task.spawn(function()
-    while true do
-        if farmBtn:GetAttribute("state") or scanBtn:GetAttribute("state") then
-            local pet,part = scanPet()
-            if pet then
-                fly(part)
-                for _,v in pairs(part:GetDescendants()) do
-                    if v:IsA("ProximityPrompt") then
-                        fireproximityprompt(v)
-                    end
+-- --------------------------------------------------
+-- SCAN ESP (HIỆN VỊ TRÍ PET / EGG)
+local scanEspList = {}
+
+RunService.RenderStepped:Connect(function()
+    -- clear cũ
+    for _,v in pairs(scanEspList) do v:Destroy() end
+    scanEspList = {}
+
+    if not scanBtn:GetAttribute("state") then return end
+
+    local keyword = string.lower(input.Text)
+    if keyword == "" then return end
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") then
+            local part = v:FindFirstChildWhichIsA("BasePart")
+
+            if part and string.find(string.lower(v.Name), keyword) then
+                
+                -- ESP TEXT
+                local bill = Instance.new("BillboardGui", gui)
+                bill.Size = UDim2.new(0,140,0,40)
+                bill.Adornee = part
+                bill.AlwaysOnTop = true
+
+                local txt = Instance.new("TextLabel", bill)
+                txt.Size = UDim2.new(1,0,1,0)
+                txt.BackgroundTransparency = 1
+                txt.TextColor3 = Color3.fromRGB(0,255,100)
+                txt.TextScaled = true
+
+                txt.Text = v.Name
+
+                -- ESP BOX
+                local box = Instance.new("BoxHandleAdornment")
+                box.Adornee = part
+                box.Size = part.Size + Vector3.new(1,1,1)
+                box.Color3 = Color3.fromRGB(0,255,100)
+                box.AlwaysOnTop = true
+                box.Parent = gui
+
+                table.insert(scanEspList, bill)
+                table.insert(scanEspList, box)
             end
+        end
+    end
+end)
 --------------------------------------------------
 -- AIM (GIỮ NGUYÊN)
 local holding=false
