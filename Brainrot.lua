@@ -246,17 +246,19 @@ local function fly(part)
         task.wait(0.03)
     end
 end
---------------------------------------------------
--- --------------------------------------------------
--- SCAN ESP (HIỆN VỊ TRÍ PET / EGG)
+----------------------------------------------------------------------------------------------------
+-- SCAN ESP FIX (KHÔNG RESET)
 local scanEspList = {}
 
-RunService.RenderStepped:Connect(function()
-    -- clear cũ
-    for _,v in pairs(scanEspList) do v:Destroy() end
+local function clearScanEsp()
+    for _,v in pairs(scanEspList) do
+        if v then v:Destroy() end
+    end
     scanEspList = {}
+end
 
-    if not scanBtn:GetAttribute("state") then return end
+local function createScanEsp()
+    clearScanEsp()
 
     local keyword = string.lower(input.Text)
     if keyword == "" then return end
@@ -267,7 +269,7 @@ RunService.RenderStepped:Connect(function()
 
             if part and string.find(string.lower(v.Name), keyword) then
                 
-                -- ESP TEXT
+                -- TEXT
                 local bill = Instance.new("BillboardGui", gui)
                 bill.Size = UDim2.new(0,140,0,40)
                 bill.Adornee = part
@@ -278,10 +280,9 @@ RunService.RenderStepped:Connect(function()
                 txt.BackgroundTransparency = 1
                 txt.TextColor3 = Color3.fromRGB(0,255,100)
                 txt.TextScaled = true
-
                 txt.Text = v.Name
 
-                -- ESP BOX
+                -- BOX
                 local box = Instance.new("BoxHandleAdornment")
                 box.Adornee = part
                 box.Size = part.Size + Vector3.new(1,1,1)
@@ -293,6 +294,18 @@ RunService.RenderStepped:Connect(function()
                 table.insert(scanEspList, box)
             end
         end
+    end
+end
+
+-- chỉ update mỗi 1 giây (KHÔNG spam)
+task.spawn(function()
+    while true do
+        if scanBtn:GetAttribute("state") then
+            createScanEsp()
+        else
+            clearScanEsp()
+        end
+        task.wait(1) -- chỉnh 0.5 nếu muốn nhanh hơn
     end
 end)
 --------------------------------------------------
