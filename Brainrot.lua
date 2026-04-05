@@ -89,42 +89,7 @@ input.PlaceholderText = "Nhập tên pet..."
 input.BackgroundColor3 = Color3.fromRGB(45,45,50)
 input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
-------------------------------
-task.spawn(function()
-    while true do
-        if eventBtn:GetAttribute("state") then
-
-            local char = player.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-
-                for _,v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("ProximityPrompt") then
-                        
-                        local part = v.Parent
-                        if part and part:IsA("BasePart") then
-                            
-                            local dist = (hrp.Position - part.Position).Magnitude
-                            
-                            -- chỉ lấy gần (tránh spam toàn map)
-                            if dist < 20 then
-                                
-                                -- debug để bạn biết nó là gì
-                                print("FOUND:", v.ObjectText, v.ActionText)
-
-                                fireproximityprompt(v)
-                                task.wait(0.5)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-
-        task.wait(0.5)
-    end
-end)
-                            
+                   
 --------------------------------------------------
 -- SPEED SLIDER
 local speed = 16
@@ -222,6 +187,38 @@ local scanBtn = toggle("SCAN",150)
 local espBtn  = toggle("ESP",200)
 local aimBtn  = toggle("AIM",250)
 local eventBtn = toggle("AUTO EVENT 🥚",300)
+
+--------------------------
+task.spawn(function()
+    while true do
+        if eventBtn:GetAttribute("state") then
+
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+
+                for _,v in pairs(workspace:GetDescendants()) do
+                    if v:IsA("ProximityPrompt") then
+                        
+                        local part = v.Parent
+                        if part and part:IsA("BasePart") then
+                            
+                            local dist = (hrp.Position - part.Position).Magnitude
+                            
+                            if dist < 20 then
+                                print("FOUND:", v.ObjectText, v.ActionText)
+                                fireproximityprompt(v)
+                                task.wait(0.4)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        task.wait(0.5)
+    end
+end)
 --------------------------------------------------
 -- SCAN
 local function scanPet()
