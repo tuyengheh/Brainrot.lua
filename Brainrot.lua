@@ -89,7 +89,40 @@ input.PlaceholderText = "Nhập tên pet..."
 input.BackgroundColor3 = Color3.fromRGB(45,45,50)
 input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
+------------------------------
+task.spawn(function()
+    while true do
+        if craftBtn:GetAttribute("state") then
 
+            local char = player.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+
+                for _,v in pairs(workspace:GetDescendants()) do
+                    if v:IsA("ProximityPrompt") then
+                        
+                        -- LỌC ĐÚNG TÊN
+                        if v.Parent and v.Parent.Name == "Easter Base Skin" then
+                            
+                            local part = v.Parent
+                            
+                            -- TELEPORT TỚI
+                            hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+                            task.wait(0.3)
+
+                            -- BẤM E
+                            fireproximityprompt(v)
+
+                            task.wait(2) -- tránh spam
+                        end
+                    end
+                end
+            end
+        end
+
+        task.wait(1)
+    end
+end)
 --------------------------------------------------
 -- SPEED SLIDER
 local speed = 16
