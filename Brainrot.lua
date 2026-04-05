@@ -216,12 +216,12 @@ local function toggle(txt,y)
 
     return b
 end
-local eventBtn = toggle("AUTO EVENT 🥚",300)
+
 local farmBtn = toggle("AUTO FARM",100)
 local scanBtn = toggle("SCAN",150)
 local espBtn  = toggle("ESP",200)
 local aimBtn  = toggle("AIM",250)
-
+local eventBtn = toggle("AUTO EVENT 🥚",300)
 --------------------------------------------------
 -- SCAN
 local function scanPet()
