@@ -186,37 +186,37 @@ local farmBtn = toggle("AUTO FARM",100)
 local scanBtn = toggle("SCAN",150)
 local espBtn  = toggle("ESP",200)
 local aimBtn  = toggle("AIM",250)
-local eventBtn = toggle("AUTO EVENT 🥚",300)
+local openEventBtn = toggle("OPEN EVENT UI 🎁",350)
 
 --------------------------
-task.spawn(function()
+ task.spawn(function()
     while true do
-        if eventBtn:GetAttribute("state") then
+        if openEventBtn:GetAttribute("state") then
+            
+            for _,v in pairs(workspace:GetDescendants()) do
+                if v:IsA("ProximityPrompt") then
+                    
+                    -- lọc đúng event (quan trọng)
+                    local name = (v.ObjectText or "") .. (v.ActionText or "")
+                    name = string.lower(name)
 
-            local char = player.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-
-                for _,v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("ProximityPrompt") then
+                    if string.find(name,"easter") or string.find(name,"event") or string.find(name,"skin") then
                         
-                        local part = v.Parent
-                        if part and part:IsA("BasePart") then
-                            
-                            local dist = (hrp.Position - part.Position).Magnitude
-                            
-                            if dist < 20 then
-                                print("FOUND:", v.ObjectText, v.ActionText)
-                                fireproximityprompt(v)
-                                task.wait(0.4)
-                            end
-                        end
+                        -- bỏ qua khoảng cách luôn
+                        v.HoldDuration = 0
+                        v.RequiresLineOfSight = false
+                        v.MaxActivationDistance = 9999
+                        
+                        fireproximityprompt(v)
+                        
+                        print("OPENED EVENT:", v.ObjectText, v.ActionText)
+                        task.wait(1)
                     end
                 end
             end
         end
 
-        task.wait(0.5)
+        task.wait(1)
     end
 end)
 --------------------------------------------------
