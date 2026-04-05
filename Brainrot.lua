@@ -186,39 +186,65 @@ local farmBtn = toggle("AUTO FARM",100)
 local scanBtn = toggle("ESP",150)
 local espBtn  = toggle("định vị",200)
 local aimBtn  = toggle("AIM",250)
-local openEventBtn = toggle("OPEN EVENT UI 🎁",350)
+local autoEventBtn = toggle("AUTO EVENT 🥚 (TP + OPEN)",400)
 
 --------------------------
  task.spawn(function()
     while true do
-        if openEventBtn:GetAttribute("state") then
+        if autoEventBtn:GetAttribute("state") then
             
-            for _,v in pairs(workspace:GetDescendants()) do
-                if v:IsA("ProximityPrompt") then
-                    
-                    -- lọc đúng event (quan trọng)
-                    local name = (v.ObjectText or "") .. (v.ActionText or "")
-                    name = string.lower(name)
+            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
-                    if string.find(name,"easter") or string.find(name,"event") or string.find(name,"skin") then
-                        
-                        -- bỏ qua khoảng cách luôn
-                        v.HoldDuration = 0
-                        v.RequiresLineOfSight = false
-                        v.MaxActivationDistance = 9999
-                        
-                        fireproximityprompt(v)
-                        
-                        print("OPENED EVENT:", v.ObjectText, v.ActionText)
-                        task.wait(1)
+            for _,v in pairs(workspace:GetDescendants()) do
+                if v.Name == "EasterBaseSkinPedestal" then
+                    
+                    local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
+                    
+                    if part and hrp then
+                        -- 📍 TELE TỚI
+                        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+                        task.wait(0.5)
+
+                        print("TP TO EVENT")
+
+                        -- 🔘 CLICK DETECTOR
+                        local click = v:FindFirstChildOfClass("ClickDetector")
+                        if click then
+                            fireclickdetector(click)
+                            print("CLICKED")
+                        end
+
+                        -- ⚡ PROXIMITY (phòng hờ)
+                        for _,p in pairs(v:GetDescendants()) do
+                            if p:IsA("ProximityPrompt") then
+                                p.HoldDuration = 0
+                                p.MaxActivationDistance = 9999
+                                fireproximityprompt(p)
+                                print("PROMPT USED")
+                            end
+                        end
+
+                        -- 🧠 REMOTE EVENT (THỬ AUTO)
+                        for _,r in pairs(game:GetDescendants()) do
+                            if r:IsA("RemoteEvent") then
+                                local name = string.lower(r.Name)
+
+                                if string.find(name,"easter") or string.find(name,"skin") then
+                                    pcall(function()
+                                        r:FireServer(v)
+                                    end)
+                                    print("REMOTE:", r.Name)
+                                end
+                            end
+                        end
                     end
                 end
             end
         end
 
-        task.wait(1)
+        task.wait(2)
     end
-end)
+end)                    
 --------------------------------------------------
 -- SCAN
 local function scanPet()
