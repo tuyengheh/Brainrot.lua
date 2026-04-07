@@ -181,7 +181,7 @@ end
 local farmBtn = toggle("AUTO FARM",100)
 local espBtn  = toggle("ESP PLAYER",150)
 local aimBtn  = toggle("AIM",200)
-local eventBtn = toggle("AUTO EVENT",250)
+local eventBtn = toggle("AUTO EVENT🥚🥚",250)
 
 --------------------
 task.spawn(function()
