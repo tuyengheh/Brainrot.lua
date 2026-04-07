@@ -184,62 +184,70 @@ local aimBtn  = toggle("AIM",200)
 local eventBtn = toggle("AUTO EVENT",250)
 
 --------------------
+-- ⚡ AUTO EVENT SIÊU NHANH (KHÔNG MISS)
 task.spawn(function()
     while true do
-        if autoEventBtn:GetAttribute("state") then
+        if autoEventBtn and autoEventBtn:GetAttribute("state") then
             
-            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            local char = player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChild("Humanoid")
 
             for _,v in pairs(workspace:GetDescendants()) do
                 if v.Name == "EasterBaseSkinPedestal" then
                     
                     local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
-                    
-                    if part and hrp then
-                        -- 📍 TELE TỚI
-                        hrp.CFrame = part.CFrame + Vector3.new(0,10,0)
-                        task.wait(0.5)
 
-                        print("TP TO EVENT")
+                    if part and hrp and hum then
+                        print("🎯 FOUND EVENT")
 
-                        -- 🔘 CLICK DETECTOR
-                        local click = v:FindFirstChildOfClass("ClickDetector")
-                        if click then
-                            fireclickdetector(click)
-                            print("CLICKED")
+                        -- 🚀 BAY NHANH TỚI (KHÔNG BỊ THẤP)
+                        local target = part.Position + Vector3.new(0,8,0)
+
+                        for i = 1,12 do
+                            hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.5)
+                            hrp.Velocity = Vector3.zero
+                            task.wait(0.03)
                         end
 
-                        -- ⚡ PROXIMITY (phòng hờ)
+                        -- 🛑 GIỮ TRÊN KHÔNG (KHÔNG RƠI)
+                        hrp.Velocity = Vector3.zero
+                        hum.PlatformStand = true
+                        task.wait(0.2)
+
+                        print("🚀 REACHED EVENT")
+
+                        -- 🔘 PROXIMITY (CHÍNH)
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
                                 p.HoldDuration = 0
-                                p.MaxActivationDistance = 9999
+                                p.RequiresLineOfSight = false
+                                p.MaxActivationDistance = 20
+
                                 fireproximityprompt(p)
-                                print("PROMPT USED")
+                                print("✅ PROMPT")
                             end
                         end
 
-                        -- 🧠 REMOTE EVENT (THỬ AUTO)
-                        for _,r in pairs(game:GetDescendants()) do
-                            if r:IsA("RemoteEvent") then
-                                local name = string.lower(r.Name)
-
-                                if string.find(name,"easter") or string.find(name,"skin") then
-                                    pcall(function()
-                                        r:FireServer(v)
-                                    end)
-                                    print("REMOTE:", r.Name)
-                                end
-                            end
+                        -- 🔘 CLICK (PHỤ)
+                        local click = v:FindFirstChildOfClass("ClickDetector")
+                        if click then
+                            fireclickdetector(click)
+                            print("✅ CLICK")
                         end
+
+                        -- 🧠 RESET
+                        hum.PlatformStand = false
                     end
                 end
             end
         end
 
-        task.wait(2)
+        task.wait(0.5) -- ⚡ nhanh hơn bản cũ
     end
-end)                                                                                                        
+end)
+                        
+                                                                                                                
 --------------------------------------------------
 -- NOCLIP
 RunService.Stepped:Connect(function()
