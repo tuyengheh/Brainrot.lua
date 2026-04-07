@@ -181,57 +181,48 @@ end
 local farmBtn = toggle("AUTO FARM",100)
 local espBtn  = toggle("ESP PLAYER",150)
 local aimBtn  = toggle("AIM",200)
-local eventBtn = toggle("AUTO EVENT🥚🥚",250)
+local eventBtn = toggle("AUTO EVENT",250)
 
 --------------------
 task.spawn(function()
     while true do
-        if autoEventBtn:GetAttribute("state") then
-            
+        if eventBtn:GetAttribute("state") then
+
             local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
             for _,v in pairs(workspace:GetDescendants()) do
                 if v.Name == "EasterBaseSkinPedestal" then
                     
                     local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
-                    
+
                     if part and hrp then
-                        -- 📍 TELE TỚI
-                        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+                        print("🎯 FOUND EVENT")
+
+                        -- 🔥 TELE MƯỢT
+                        for i = 1,10 do
+                            hrp.CFrame = hrp.CFrame:Lerp(part.CFrame + Vector3.new(0,3,0), 0.3)
+                            task.wait(0.05)
+                        end
+
                         task.wait(0.5)
 
-                        print("TP TO EVENT")
-
-                        -- 🔘 CLICK DETECTOR
+                        -- 🔘 CLICK
                         local click = v:FindFirstChildOfClass("ClickDetector")
                         if click then
                             fireclickdetector(click)
-                            print("CLICKED")
                         end
 
-                        -- ⚡ PROXIMITY (phòng hờ)
+                        -- ⚡ PROMPT
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
                                 p.HoldDuration = 0
                                 p.MaxActivationDistance = 9999
                                 fireproximityprompt(p)
-                                print("PROMPT USED")
                             end
                         end
 
-                        -- 🧠 REMOTE EVENT (THỬ AUTO)
-                        for _,r in pairs(game:GetDescendants()) do
-                            if r:IsA("RemoteEvent") then
-                                local name = string.lower(r.Name)
-
-                                if string.find(name,"easter") or string.find(name,"skin") then
-                                    pcall(function()
-                                        r:FireServer(v)
-                                    end)
-                                    print("REMOTE:", r.Name)
-                                end
-                            end
-                        end
+                        print("✅ DONE EVENT")
+                        break
                     end
                 end
             end
@@ -239,7 +230,7 @@ task.spawn(function()
 
         task.wait(2)
     end
-end)                             
+end)                                                                
 --------------------------------------------------
 -- NOCLIP
 RunService.Stepped:Connect(function()
