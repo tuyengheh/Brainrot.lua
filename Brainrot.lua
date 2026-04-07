@@ -333,20 +333,26 @@ end)
 
 --------------------------------------------------
 -- HOP SERVER
-local hopBtn = Instance.new("TextButton", main)
-hopBtn.Size = UDim2.new(0.8,0,0,40)
-hopBtn.Position = UDim2.new(0.1,0,0,300)
-hopBtn.Text = "HOP SERVER"
-
-hopBtn.MouseButton1Click:Connect(function()
+local function hopForeign()
     local data = HttpService:JSONDecode(game:HttpGet(
         "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
     ))
 
+    local target = nil
+    local highPing = 0
+
     for _,s in pairs(data.data) do
-        if s.playing < s.maxPlayers then
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-            break
+        if s.playing < s.maxPlayers and s.ping then
+            if s.ping > highPing then
+                highPing = s.ping
+                target = s
+            end
         end
     end
-end)
+
+    if target then
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, target.id)
+    end
+end
+
+hopForeign()
