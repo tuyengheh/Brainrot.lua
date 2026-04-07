@@ -318,112 +318,69 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
--- 🚀 HOP SERVER PRO (ANTI LẶP + SCAN NHANH)
+----------------------------------------------------
+-- 🚀 HOP SERVER PRO FIX FULL
 
-local HttpService = game:GetService("HttpService")
-local TeleportService = game:GetService("TeleportService")
-
-local visited = {} -- lưu server đã đi
-local targetPet = "" -- nhập pet cần tìm
+local visited = {}
 local scanning = false
 
---------------------------------------------------
--- 🔍 SCAN PET TRONG SERVER
+local targetPets = {
+    "dragon","garama","kettu","ketchuru",
+    "evi","ocraledon","tralaledon","tang tang","la sec"
+}
 
 local function findPet()
-    local keyword = string.lower(targetPet)
-
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("Model") then
-            if string.find(string.lower(v.Name), keyword) then
-                print("🎯 FOUND PET:", v.Name)
-                return true
+            local name = string.lower(v.Name)
+
+            for _,pet in pairs(targetPets) do
+                if string.find(name, pet) then
+                    print("🎯 FOUND:", v.Name)
+                    return true
+                end
             end
         end
     end
-
     return false
 end
 
---------------------------------------------------
--- 🌍 GET SERVER LIST
-
-local function getServers(cursor)
-    local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
-
-    if cursor then
-        url = url .. "&cursor="..cursor
-    end
-
-    local success, result = pcall(function()
-        return HttpService:JSONDecode(game:HttpGet(url))
-    end)
-
-    if success then
-        return result
-    end
-end
-
---------------------------------------------------
--- 🔁 HOP LOGIC
-
 local function hopToNewServer()
-    local cursor = nil
+    local data = HttpService:JSONDecode(game:HttpGet(
+        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
+    ))
 
-    while true do
-        local data = getServers(cursor)
-        if not data then break end
+    for _,s in pairs(data.data) do
+        if s.playing < s.maxPlayers and not visited[s.id] then
+            visited[s.id] = true
 
-        for _,s in pairs(data.data) do
-            if s.playing < s.maxPlayers and not visited[s.id] then
-                
-                visited[s.id] = true
-
-                print("🚀 HOP:", s.id, "| players:", s.playing)
-
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-                task.wait(2)
-
-                return
-            end
-        end
-
-        if data.nextPageCursor then
-            cursor = data.nextPageCursor
-        else
-            print("❌ HẾT SERVER → RESET LIST")
-            visited = {}
-            break
+            print("🚀 HOP:", s.id)
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
+            return
         end
     end
 end
-
---------------------------------------------------
--- ⚡ AUTO SCAN + HOP
 
 local function startScan()
-    scanning = true
-
     task.spawn(function()
         while scanning do
             task.wait(2)
 
-            if targetPet ~= "" then
-                if findPet() then
-                    print("✅ GIỮ SERVER NÀY")
-                    scanning = false
-                    break
-                else
-                    print("❌ KHÔNG CÓ → HOP")
-                    hopToNewServer()
-                end
+            if findPet() then
+                print("✅ FOUND → STOP")
+                scanning = false
+            else
+                print("❌ NOT FOUND → HOP")
+                hopToNewServer()
             end
         end
     end)
 end
 
---------------------------------------------------
--- 🧪 TEST (bạn chỉnh ở đây)
+hopPetBtn.MouseButton1Click:Connect(function()
+    scanning = false
+    task.wait(0.5)
 
-targetPet = "dragon","Garama","kettu","ketchuru","Evi","ocraledon","tralaledon","tang tang","la sec"-- đổi tên pet
-startScan()
+    scanning = true
+    startScan()
+end)
