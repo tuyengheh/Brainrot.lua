@@ -332,27 +332,64 @@ task.spawn(function()
 end)
 
 --------------------------------------------------
--- HOP SERVER
-local function hopForeign()
-    local data = HttpService:JSONDecode(game:HttpGet(
-        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
-    ))
+-- --------------------------------------------------
+-- 🌍 HOP SERVER XỊN
 
-    local target = nil
-    local highPing = 0
+local hopBtn = Instance.new("TextButton", main)
+hopBtn.Size = UDim2.new(0.8,0,0,40)
+hopBtn.Position = UDim2.new(0.1,0,0,380)
+hopBtn.Text = "HOP SERVER 🌍"
+hopBtn.BackgroundColor3 = Color3.fromRGB(45,45,50)
+hopBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", hopBtn)
+
+-- tránh quay lại server cũ
+local visitedServers = {}
+
+local function hopServer()
+    local success, data = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(
+            "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
+        ))
+    end)
+
+    if not success or not data then
+        warn("Lỗi lấy server")
+        return
+    end
+
+    local servers = {}
 
     for _,s in pairs(data.data) do
-        if s.playing < s.maxPlayers and s.ping then
-            if s.ping > highPing then
-                highPing = s.ping
-                target = s
-            end
+        -- lọc server tốt
+        if s.playing < s.maxPlayers and not visitedServers[s.id] then
+            
+            -- ưu tiên server ít người
+            table.insert(servers, {
+                id = s.id,
+                players = s.playing
+            })
         end
     end
 
-    if target then
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, target.id)
+    -- sắp xếp: ít người trước (giống server mới)
+    table.sort(servers, function(a,b)
+        return a.players < b.players
+    end)
+
+    if #servers > 0 then
+        local chosen = servers[math.random(1, math.min(5,#servers))] -- random top server tốt
+
+        visitedServers[chosen.id] = true
+
+        print("HOP TO:", chosen.id, "PLAYERS:", chosen.players)
+
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, chosen.id)
+    else
+        warn("Không tìm được server phù hợp")
     end
 end
 
-hopForeign()
+hopBtn.MouseButton1Click:Connect(function()
+    hopServer()
+end)
