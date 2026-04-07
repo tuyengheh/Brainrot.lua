@@ -330,66 +330,54 @@ task.spawn(function()
         task.wait(3)
     end
 end)
-
 --------------------------------------------------
--- --------------------------------------------------
--- 🌍 HOP SERVER XỊN
+-- 🎯 HOP SERVER TÌM PET
 
-local hopBtn = Instance.new("TextButton", main)
-hopBtn.Size = UDim2.new(0.8,0,0,40)
-hopBtn.Position = UDim2.new(0.1,0,0,380)
-hopBtn.Text = "HOP SERVER 🌍"
-hopBtn.BackgroundColor3 = Color3.fromRGB(45,45,50)
-hopBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", hopBtn)
+local targetPet = "" -- nhập tên pet cần tìm (ví dụ: dragon)
+local found = false
 
--- tránh quay lại server cũ
-local visitedServers = {}
+local function findPetInServer()
+    local keyword = string.lower(targetPet)
 
-local function hopServer()
-    local success, data = pcall(function()
-        return HttpService:JSONDecode(game:HttpGet(
-            "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
-        ))
-    end)
-
-    if not success or not data then
-        warn("Lỗi lấy server")
-        return
-    end
-
-    local servers = {}
-
-    for _,s in pairs(data.data) do
-        -- lọc server tốt
-        if s.playing < s.maxPlayers and not visitedServers[s.id] then
-            
-            -- ưu tiên server ít người
-            table.insert(servers, {
-                id = s.id,
-                players = s.playing
-            })
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") then
+            if string.find(string.lower(v.Name), keyword) then
+                print("FOUND PET:", v.Name)
+                found = true
+                return true
+            end
         end
     end
 
-    -- sắp xếp: ít người trước (giống server mới)
-    table.sort(servers, function(a,b)
-        return a.players < b.players
-    end)
+    return false
+end
 
-    if #servers > 0 then
-        local chosen = servers[math.random(1, math.min(5,#servers))] -- random top server tốt
+local function hopServer()
+    local data = game:GetService("HttpService"):JSONDecode(game:HttpGet(
+        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
+    ))
 
-        visitedServers[chosen.id] = true
-
-        print("HOP TO:", chosen.id, "PLAYERS:", chosen.players)
-
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, chosen.id)
-    else
-        warn("Không tìm được server phù hợp")
+    for _,s in pairs(data.data) do
+        if s.playing < s.maxPlayers then
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, s.id)
+            break
+        end
     end
 end
 
-hopBtn.MouseButton1Click:Connect(function()
-    hopServer()
+-- 🔁 LOOP
+task.spawn(function()
+    while true do
+        task.wait(3)
+
+        if targetPet ~= "" and not found then
+            if not findPetInServer() then
+                print("Không có → hop tiếp")
+                hopServer()
+            else
+                print("ĐÃ TÌM THẤY PET → DỪNG")
+                break
+            end
+        end
+    end
 end)
