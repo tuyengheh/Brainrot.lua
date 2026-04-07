@@ -197,7 +197,7 @@ task.spawn(function()
                     
                     if part and hrp then
                         -- 📍 TELE TỚI
-                        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+                        hrp.CFrame = part.CFrame + Vector3.new(0,10,0)
                         task.wait(0.5)
 
                         print("TP TO EVENT")
