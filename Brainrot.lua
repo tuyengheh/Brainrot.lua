@@ -9,40 +9,19 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 
---------------------------------------------------
--- GUI PARENT (FIX 100% KHÔNG MẤT MENU)
 local parentGui = gethui and gethui() or game:GetService("CoreGui")
 
 --------------------------------------------------
--- INTRO
-local intro = Instance.new("ScreenGui")
-intro.Parent = parentGui
-intro.IgnoreGuiInset = true
-
-local bg = Instance.new("Frame", intro)
-bg.Size = UDim2.new(1,0,1,0)
-bg.BackgroundColor3 = Color3.fromRGB(10,10,15)
-
-local title = Instance.new("TextLabel", bg)
-title.Size = UDim2.new(1,0,0.2,0)
-title.Position = UDim2.new(0,0,0.4,0)
-title.Text = "✨ TIENHUB ✨"
-title.TextScaled = true
-title.BackgroundTransparency = 1
-title.TextTransparency = 1
-
-TweenService:Create(title, TweenInfo.new(0.8), {TextTransparency = 0}):Play()
-task.wait(2)
-TweenService:Create(bg, TweenInfo.new(0.8), {BackgroundTransparency = 1}):Play()
-task.wait(1)
-intro:Destroy()
-
---------------------------------------------------
--- GUI ROOT
+-- GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "TIENHUB_UI"
 gui.Parent = parentGui
 gui.ResetOnSpawn = false
+
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    gui.Parent = parentGui
+end)
 
 --------------------------------------------------
 -- MAIN
@@ -55,13 +34,11 @@ main.Draggable = true
 Instance.new("UICorner", main)
 
 --------------------------------------------------
--- ☯ BUTTON
+-- TOGGLE
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,60,0,60)
 toggleBtn.Position = UDim2.new(0.88,0,0.5,0)
 toggleBtn.Text = "☠️"
-toggleBtn.TextScaled = true
-toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,50)
 toggleBtn.Visible = false
 Instance.new("UICorner", toggleBtn)
 
@@ -85,11 +62,11 @@ end)
 local input = Instance.new("TextBox", main)
 input.Size = UDim2.new(0.8,0,0,35)
 input.Position = UDim2.new(0.1,0,0,50)
-input.PlaceholderText = "Nhập tên pet..."
+input.PlaceholderText = "Nhập tên..."
 input.BackgroundColor3 = Color3.fromRGB(45,45,50)
 input.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", input)
-                   
+
 --------------------------------------------------
 -- SPEED SLIDER
 local speed = 16
@@ -132,31 +109,15 @@ UIS.InputChanged:Connect(function(i)
     end
 end)
 
-UIS.TouchMoved:Connect(function(i)
-    if dragging then
-        updateSlider(i.Position.X)
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    local char = player.Character
-    if char and char:FindFirstChild("Humanoid") then
-        char.Humanoid.WalkSpeed = speed
-    end
-end)
-
 --------------------------------------------------
--- INFO
-local info = Instance.new("TextLabel", main)
-info.Size = UDim2.new(1,0,0,40)
-info.BackgroundTransparency = 1
-info.TextColor3 = Color3.new(1,1,1)
-info.TextScaled = true
-
-RunService.RenderStepped:Connect(function()
-    local char = player.Character
-    if char and char:FindFirstChild("Humanoid") then
-        info.Text = player.Name.." | HP "..math.floor(char.Humanoid.Health).." | Speed "..speed
+-- SPEED LOOP (FIX)
+task.spawn(function()
+    while true do
+        local char = player.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = speed
+        end
+        task.wait(0.3)
     end
 end)
 
@@ -183,159 +144,108 @@ local function toggle(txt,y)
 end
 
 local farmBtn = toggle("AUTO FARM",100)
-local scanBtn = toggle("ESP",150)
-local espBtn  = toggle("định vị",200)
+local scanBtn = toggle("ESP OBJECT",150)
+local espBtn  = toggle("ESP PLAYER",200)
 local aimBtn  = toggle("AIM",250)
-local autoEventBtn = toggle("AUTO EVENT 🥚 (TP + OPEN)",400)
+local eventBtn= toggle("AUTO EVENT",300)
 
---------------------------
- task.spawn(function()
+--------------------------------------------------
+-- AUTO FARM (NHẸ)
+task.spawn(function()
     while true do
-        if autoEventBtn:GetAttribute("state") then
-            
-            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if farmBtn:GetAttribute("state") then
+            local keyword = string.lower(input.Text)
 
             for _,v in pairs(workspace:GetDescendants()) do
-                if v.Name == "EasterBaseSkinPedestal" then
-                    
-                    local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
-                    
-                    if part and hrp then
-                        -- 📍 TELE TỚI
-                        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
-                        task.wait(0.5)
+                if v:IsA("Model") then
+                    local p = v:FindFirstChildWhichIsA("BasePart")
 
-                        print("TP TO EVENT")
-
-                        -- 🔘 CLICK DETECTOR
-                        local click = v:FindFirstChildOfClass("ClickDetector")
-                        if click then
-                            fireclickdetector(click)
-                            print("CLICKED")
-                        end
-
-                        -- ⚡ PROXIMITY (phòng hờ)
-                        for _,p in pairs(v:GetDescendants()) do
-                            if p:IsA("ProximityPrompt") then
-                                p.HoldDuration = 0
-                                p.MaxActivationDistance = 9999
-                                fireproximityprompt(p)
-                                print("PROMPT USED")
-                            end
-                        end
-
-                        -- 🧠 REMOTE EVENT (THỬ AUTO)
-                        for _,r in pairs(game:GetDescendants()) do
-                            if r:IsA("RemoteEvent") then
-                                local name = string.lower(r.Name)
-
-                                if string.find(name,"easter") or string.find(name,"skin") then
-                                    pcall(function()
-                                        r:FireServer(v)
-                                    end)
-                                    print("REMOTE:", r.Name)
-                                end
-                            end
+                    if p and string.find(string.lower(v.Name), keyword) then
+                        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            hrp.CFrame = p.CFrame + Vector3.new(0,3,0)
                         end
                     end
                 end
             end
         end
-
-        task.wait(2)
-    end
-end)                    
---------------------------------------------------
--- SCAN
-local function scanPet()
-    local keyword = string.lower(input.Text)
-    if keyword == "" then return end
-
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") then
-            local p = v:FindFirstChildWhichIsA("BasePart")
-            if p and string.find(string.lower(v.Name), keyword) then
-                return v,p
-            end
-        end
-    end
-end
-
---------------------------------------------------
--- FLY
-local function fly(part)
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    for i=1,40 do
-        hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(part.Position+Vector3.new(0,3,0)),0.1)
-        task.wait(0.03)
-    end
-end
-----------------------------------------------------------------------------------------------------
--- SCAN ESP FIX (KHÔNG RESET)
-local scanEspList = {}
-
-local function clearScanEsp()
-    for _,v in pairs(scanEspList) do
-        if v then v:Destroy() end
-    end
-    scanEspList = {}
-end
-
-local function createScanEsp()
-    clearScanEsp()
-
-    local keyword = string.lower(input.Text)
-    if keyword == "" then return end
-
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") then
-            local part = v:FindFirstChildWhichIsA("BasePart")
-
-            if part and string.find(string.lower(v.Name), keyword) then
-                
-                -- TEXT
-                local bill = Instance.new("BillboardGui", gui)
-                bill.Size = UDim2.new(0,140,0,40)
-                bill.Adornee = part
-                bill.AlwaysOnTop = true
-
-                local txt = Instance.new("TextLabel", bill)
-                txt.Size = UDim2.new(1,0,1,0)
-                txt.BackgroundTransparency = 1
-                txt.TextColor3 = Color3.fromRGB(0,255,100)
-                txt.TextScaled = true
-                txt.Text = v.Name
-
-                -- BOX
-                local box = Instance.new("BoxHandleAdornment")
-                box.Adornee = part
-                box.Size = part.Size + Vector3.new(1,1,1)
-                box.Color3 = Color3.fromRGB(0,255,100)
-                box.AlwaysOnTop = true
-                box.Parent = gui
-
-                table.insert(scanEspList, bill)
-                table.insert(scanEspList, box)
-            end
-        end
-    end
-end
-
--- chỉ update mỗi 1 giây (KHÔNG spam)
-task.spawn(function()
-    while true do
-        if scanBtn:GetAttribute("state") then
-            createScanEsp()
-        else
-            clearScanEsp()
-        end
-        task.wait(1) -- chỉnh 0.5 nếu muốn nhanh hơn
+        task.wait(1)
     end
 end)
+
 --------------------------------------------------
--- AIM (GIỮ NGUYÊN)
+-- ESP OBJECT
+local scanEspList = {}
+
+task.spawn(function()
+    while true do
+        for _,v in pairs(scanEspList) do v:Destroy() end
+        scanEspList = {}
+
+        if scanBtn:GetAttribute("state") then
+            local keyword = string.lower(input.Text)
+
+            for _,v in pairs(workspace:GetDescendants()) do
+                if v:IsA("Model") then
+                    local part = v:FindFirstChildWhichIsA("BasePart")
+
+                    if part and string.find(string.lower(v.Name), keyword) then
+                        local bill = Instance.new("BillboardGui", gui)
+                        bill.Size = UDim2.new(0,140,0,40)
+                        bill.Adornee = part
+                        bill.AlwaysOnTop = true
+
+                        local txt = Instance.new("TextLabel", bill)
+                        txt.Size = UDim2.new(1,0,1,0)
+                        txt.BackgroundTransparency = 1
+                        txt.TextScaled = true
+                        txt.Text = v.Name
+
+                        table.insert(scanEspList, bill)
+                    end
+                end
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+--------------------------------------------------
+-- ESP PLAYER (FIX)
+local espList = {}
+
+task.spawn(function()
+    while true do
+        for _,v in pairs(espList) do v:Destroy() end
+        espList = {}
+
+        if espBtn:GetAttribute("state") then
+            for _,plr in pairs(game.Players:GetPlayers()) do
+                if plr ~= player and plr.Character then
+                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local bill = Instance.new("BillboardGui", gui)
+                        bill.Size = UDim2.new(0,120,0,40)
+                        bill.Adornee = hrp
+                        bill.AlwaysOnTop = true
+
+                        local txt = Instance.new("TextLabel", bill)
+                        txt.Size = UDim2.new(1,0,1,0)
+                        txt.BackgroundTransparency = 1
+                        txt.TextScaled = true
+                        txt.Text = plr.Name
+
+                        table.insert(espList, bill)
+                    end
+                end
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+--------------------------------------------------
+-- AIM
 local holding=false
 
 UIS.InputBegan:Connect(function(i,gp)
@@ -350,75 +260,45 @@ UIS.InputEnded:Connect(function(i)
     end
 end)
 
-local function getClosest()
-    local closest,dist=nil,4000
-    local myChar=player.Character
-    if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
-
-    local myPos=myChar.HumanoidRootPart.Position
-
-    for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp=plr.Character.HumanoidRootPart
-            local d=(myPos-hrp.Position).Magnitude
-            if d<dist then
-                dist=d
-                closest=hrp
-            end
-        end
-    end
-
-    return closest
-end
-
 RunService.RenderStepped:Connect(function()
     if aimBtn:GetAttribute("state") and holding then
-        local t=getClosest()
-        if t then
-            camera.CFrame = CFrame.new(camera.CFrame.Position, t.Position)
+        local myChar=player.Character
+        if not myChar then return end
+
+        local myPos=myChar.HumanoidRootPart.Position
+        local closest,dist=nil,4000
+
+        for _,plr in pairs(game.Players:GetPlayers()) do
+            if plr~=player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp=plr.Character.HumanoidRootPart
+                local d=(myPos-hrp.Position).Magnitude
+                if d<dist then
+                    dist=d
+                    closest=hrp
+                end
+            end
+        end
+
+        if closest then
+            camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
         end
     end
 end)
 
 --------------------------------------------------
--- ESP
-local espList={}
-RunService.RenderStepped:Connect(function()
-    for _,v in pairs(espList) do v:Destroy() end
-    espList={}
-
-    if not espBtn:GetAttribute("state") then return end
-
-    for _,plr in pairs(game.Players:GetPlayers()) do
-        if plr~=player and plr.Character then
-            local char=plr.Character
-            local hrp=char:FindFirstChild("HumanoidRootPart")
-            local hum=char:FindFirstChild("Humanoid")
-
-            if hrp and hum then
-                local box=Instance.new("BoxHandleAdornment")
-                box.Adornee=char
-                box.Size=Vector3.new(4,6,2)
-                box.AlwaysOnTop=true
-                box.Parent=gui
-
-                local bill=Instance.new("BillboardGui",gui)
-                bill.Size=UDim2.new(0,120,0,40)
-                bill.Adornee=hrp
-                bill.AlwaysOnTop=true
-
-                local txt=Instance.new("TextLabel",bill)
-                txt.Size=UDim2.new(1,0,1,0)
-                txt.BackgroundTransparency=1
-                txt.TextScaled=true
-
-                local dist=(player.Character.HumanoidRootPart.Position-hrp.Position).Magnitude
-                txt.Text=plr.Name.." | "..math.floor(hum.Health).." ["..math.floor(dist).."]"
-
-                table.insert(espList,box)
-                table.insert(espList,bill)
+-- AUTO EVENT (SAFE)
+task.spawn(function()
+    while true do
+        if eventBtn:GetAttribute("state") then
+            for _,v in pairs(workspace:GetDescendants()) do
+                if v:IsA("ProximityPrompt") then
+                    v.HoldDuration = 0
+                    v.MaxActivationDistance = 9999
+                    fireproximityprompt(v)
+                end
             end
         end
+        task.wait(2)
     end
 end)
 
@@ -426,7 +306,7 @@ end)
 -- HOP SERVER
 local hopBtn = Instance.new("TextButton", main)
 hopBtn.Size = UDim2.new(0.8,0,0,40)
-hopBtn.Position = UDim2.new(0.1,0,0,300)
+hopBtn.Position = UDim2.new(0.1,0,0,390)
 hopBtn.Text = "HOP SERVER"
 
 hopBtn.MouseButton1Click:Connect(function()
