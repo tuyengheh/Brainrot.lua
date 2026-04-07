@@ -182,11 +182,63 @@ local farmBtn = toggle("AUTO FARM",100)
 local espBtn  = toggle("ESP PLAYER",150)
 local aimBtn  = toggle("AIM",200)
 local eventBtn = toggle("AUTO EVENT",250)
-local hopPetBtn = toggle("FIND PET 🎯", 440)
 
-hopPetBtn.MouseButton1Click:Connect(function()
-    targetPet = input.Text
-    startScan()
+--------------------
+task.spawn(function()
+    while true do
+        if autoEventBtn:GetAttribute("state") then
+
+            local char = player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if hrp then
+                local found = false
+
+                for _,v in pairs(workspace:GetDescendants()) do
+                    if v.Name == "EasterBaseSkinPedestal" then
+                        found = true
+
+                        local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
+
+                        if part then
+                            print("🎯 FOUND EVENT")
+
+                            -- 🔥 TELE MƯỢT (tránh anti)
+                            for i = 1,10 do
+                                hrp.CFrame = hrp.CFrame:Lerp(part.CFrame + Vector3.new(0,3,0), 0.3)
+                                task.wait(0.05)
+                            end
+
+                            task.wait(0.5)
+
+                            -- 🔘 CLICK DETECTOR
+                            local click = v:FindFirstChildOfClass("ClickDetector")
+                            if click then
+                                fireclickdetector(click)
+                                print("🖱 CLICKED")
+                            end
+
+                            -- ⚡ PROXIMITY
+                            for _,p in pairs(v:GetDescendants()) do
+                                if p:IsA("ProximityPrompt") then
+                                    p.HoldDuration = 0
+                                    p.MaxActivationDistance = 9999
+                                    fireproximityprompt(p)
+                                    print("⚡ PROMPT")
+                                end
+                            end
+                        end
+                    end
+                end
+
+                if not found then
+                    print("❌ CHƯA CÓ EVENT")
+                end
+            end
+        end
+
+        task.wait(2)
+    end
 end)
 --------------------------------------------------
 -- NOCLIP
@@ -318,69 +370,53 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --------------------------------------------------
-----------------------------------------------------
--- 🚀 HOP SERVER PRO FIX FULL
+        --------------------------------------------------
+-- 🌍 HOP SERVER NGAY (BẤM LÀ ĐI)
+
+local hopBtn = Instance.new("TextButton", main)
+hopBtn.Size = UDim2.new(0.8,0,0,40)
+hopBtn.Position = UDim2.new(0.1,0,0,400)
+hopBtn.Text = "HOP SERVER 🌍"
+hopBtn.BackgroundColor3 = Color3.fromRGB(45,45,50)
+hopBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", hopBtn)
 
 local visited = {}
-local scanning = false
 
-local targetPets = {
-    "dragon","garama","kettu","ketchuru",
-    "evi","ocraledon","tralaledon","tang tang","la sec"
-}
+hopBtn.MouseButton1Click:Connect(function()
 
-local function findPet()
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") then
-            local name = string.lower(v.Name)
+    print("🔁 ĐANG HOP...")
 
-            for _,pet in pairs(targetPets) do
-                if string.find(name, pet) then
-                    print("🎯 FOUND:", v.Name)
-                    return true
-                end
-            end
-        end
+    local success, data = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(
+            "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
+        ))
+    end)
+
+    if not success or not data then
+        warn("❌ LỖI LẤY SERVER")
+        return
     end
-    return false
-end
 
-local function hopToNewServer()
-    local data = HttpService:JSONDecode(game:HttpGet(
-        "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?limit=100"
-    ))
+    local servers = {}
 
     for _,s in pairs(data.data) do
         if s.playing < s.maxPlayers and not visited[s.id] then
-            visited[s.id] = true
-
-            print("🚀 HOP:", s.id)
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
-            return
+            table.insert(servers, s)
         end
     end
-end
 
-local function startScan()
-    task.spawn(function()
-        while scanning do
-            task.wait(2)
+    if #servers == 0 then
+        visited = {}
+        print("♻ RESET LIST")
+        return
+    end
 
-            if findPet() then
-                print("✅ FOUND → STOP")
-                scanning = false
-            else
-                print("❌ NOT FOUND → HOP")
-                hopToNewServer()
-            end
-        end
-    end)
-end
+    -- random server (thường sẽ ra server khác khu vực)
+    local chosen = servers[math.random(1,#servers)]
+    visited[chosen.id] = true
 
-hopPetBtn.MouseButton1Click:Connect(function()
-    scanning = false
-    task.wait(0.5)
+    print("🚀 HOP TO:", chosen.id, "| players:", chosen.playing)
 
-    scanning = true
-    startScan()
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, chosen.id)
 end)
