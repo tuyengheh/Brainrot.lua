@@ -57,7 +57,7 @@ Instance.new("UICorner", main)
 local toggleBtn = Instance.new("TextButton", gui)
 toggleBtn.Size = UDim2.new(0,60,0,60)
 toggleBtn.Position = UDim2.new(0.88,0,0.5,0)
-toggleBtn.Text = "☠️"
+toggleBtn.Text = "🍀"
 toggleBtn.Visible = false
 Instance.new("UICorner", toggleBtn)
 
@@ -187,59 +187,59 @@ local eventBtn = toggle("AUTO EVENT🥚🥚",250)
 task.spawn(function()
     while true do
         if autoEventBtn:GetAttribute("state") then
+            
+            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
-            local char = player.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            for _,v in pairs(workspace:GetDescendants()) do
+                if v.Name == "EasterBaseSkinPedestal" then
+                    
+                    local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
+                    
+                    if part and hrp then
+                        -- 📍 TELE TỚI
+                        hrp.CFrame = part.CFrame + Vector3.new(0,3,0)
+                        task.wait(0.5)
 
-            if hrp then
-                local found = false
+                        print("TP TO EVENT")
 
-                for _,v in pairs(workspace:GetDescendants()) do
-                    if v.Name == "EasterBaseSkinPedestal" then
-                        found = true
+                        -- 🔘 CLICK DETECTOR
+                        local click = v:FindFirstChildOfClass("ClickDetector")
+                        if click then
+                            fireclickdetector(click)
+                            print("CLICKED")
+                        end
 
-                        local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
-
-                        if part then
-                            print("🎯 FOUND EVENT")
-
-                            -- 🔥 TELE MƯỢT (tránh anti)
-                            for i = 1,10 do
-                                hrp.CFrame = hrp.CFrame:Lerp(part.CFrame + Vector3.new(0,3,0), 0.3)
-                                task.wait(0.05)
+                        -- ⚡ PROXIMITY (phòng hờ)
+                        for _,p in pairs(v:GetDescendants()) do
+                            if p:IsA("ProximityPrompt") then
+                                p.HoldDuration = 0
+                                p.MaxActivationDistance = 9999
+                                fireproximityprompt(p)
+                                print("PROMPT USED")
                             end
+                        end
 
-                            task.wait(0.5)
+                        -- 🧠 REMOTE EVENT (THỬ AUTO)
+                        for _,r in pairs(game:GetDescendants()) do
+                            if r:IsA("RemoteEvent") then
+                                local name = string.lower(r.Name)
 
-                            -- 🔘 CLICK DETECTOR
-                            local click = v:FindFirstChildOfClass("ClickDetector")
-                            if click then
-                                fireclickdetector(click)
-                                print("🖱 CLICKED")
-                            end
-
-                            -- ⚡ PROXIMITY
-                            for _,p in pairs(v:GetDescendants()) do
-                                if p:IsA("ProximityPrompt") then
-                                    p.HoldDuration = 0
-                                    p.MaxActivationDistance = 9999
-                                    fireproximityprompt(p)
-                                    print("⚡ PROMPT")
+                                if string.find(name,"easter") or string.find(name,"skin") then
+                                    pcall(function()
+                                        r:FireServer(v)
+                                    end)
+                                    print("REMOTE:", r.Name)
                                 end
                             end
                         end
                     end
-                end
-
-                if not found then
-                    print("❌ CHƯA CÓ EVENT")
                 end
             end
         end
 
         task.wait(2)
     end
-end)
+end)                             
 --------------------------------------------------
 -- NOCLIP
 RunService.Stepped:Connect(function()
