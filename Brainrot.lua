@@ -411,3 +411,16 @@ hopBtn.MouseButton1Click:Connect(function()
 
     TeleportService:TeleportToPlaceInstance(game.PlaceId, chosen.id)
 end)
+
+-------------
+local fake = Instance.new("Part", workspace)
+fake.Name = "EasterBaseSkinPedestal"
+fake.Size = Vector3.new(5,5,5)
+fake.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0,0,-15)
+fake.Anchored = true
+
+-- thêm prompt giống game
+local prompt = Instance.new("ProximityPrompt", fake)
+prompt.ActionText = "Open"
+prompt.ObjectText = "Easter Event"
+prompt.HoldDuration = 0
